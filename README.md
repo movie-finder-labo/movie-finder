@@ -11,3 +11,6 @@ WORKFLOW:
 - Default branch: main
 - Use feature branches: feat/*, fix/*, chore/*
 - Merge via Pull Requests to main
+
+FLEXING:
+- Allowed
