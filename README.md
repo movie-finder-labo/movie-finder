@@ -14,3 +14,12 @@ WORKFLOW:
 
 FLEXING:
 - Allowed
+
+DEPENDENCIES:
+- MongoDB Community Edition (https://www.mongodb.com/try/download/community)
+    - Recommend installing compass (MongoDB GUI) alongside mongodb, enabled by default with the above msi installer
+- MongoDB Shell 
+
+MODULES:
+pip install Flask-PyMongo
+pip install python-dotenv
