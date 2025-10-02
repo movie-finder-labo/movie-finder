@@ -18,7 +18,7 @@ FLEXING:
 DEPENDENCIES:
 - MongoDB Community Edition (https://www.mongodb.com/try/download/community)
     - Recommend installing compass (MongoDB GUI) alongside mongodb, enabled by default with the above msi installer
-- MongoDB Shell 
+- MongoDB Shell (for debugging on the database)
 
 MODULES:
 pip install Flask-PyMongo
