@@ -26,20 +26,25 @@ class MovieFinderDB(object):
             async for user in cursor:
                 users.update(user)
         return users
-        
+    
+    # TODO: Replace return type from `any` to user class
+    async def GetUserBy(self, attr: str, needle: any) -> any:
+        """ Get user by a given attribute and a corresponding needle """
+        return await self.users.find_one({attr: needle})
+    
     # TODO: Replace return type from `any` to user class
     async def GetUserByUsername(self, username: str) -> any:
         """ Tries to get a user by it's username """
-        return await self.users.find_one({"username": username})
+        return await self.GetUserBy("username", username)
 
     # TODO: Replace return type from `any` to user class
     async def GetUserByPWH(self, pwh: str) -> any:
         """ Tries to get a user by it's password hash """
-        return await self.users.find_one({"pwh": pwh})
+        return await self.GetUserBy("pwh", pwh)
 
     # TODO: Replace return type from `any` to user class
     async def GetUserById(self, id: ObjectId) -> any:
-        return await self.users.find_one({"_id": id})
+        return await self.GetUserBy("_id", id)
 
     # TODO: Maybe integrate the password hashing algorithim with this function
     # TODO: Replace return type from `any` to user class
