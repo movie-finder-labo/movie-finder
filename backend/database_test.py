@@ -16,14 +16,21 @@ async def main():
         print("An unknown error has occured when connecting to the mongodb database.")
     
     print(await db.DeleteUser("lol"))
+    print(await db.DeleteUser("lol_2"))
     print(await db.GetUserByUsername("lol"))
     try:
         id = await db.CreateUser("lol", "bad password")
         print(id)
         print(await db.GetUserById(id))
+        id = await db.CreateUser("lol_2", "bad password")
+        print(id)
+        print(await db.GetUserById(id))
     except Exception as ex:
-        print(f"User lol already exists: {ex}")
-    print(await db.GetUsers())
+        print(f"{ex}")
+    except:
+        print("Unknown error occured inserting a user into the database")
+    users = await db.GetUsers()
+    print(len(users), users)
     print(await db.DeleteUser("lol"))
 
 if __name__ == "__main__":

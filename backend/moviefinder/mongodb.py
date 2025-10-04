@@ -24,7 +24,7 @@ class MovieFinderDB(object):
         users = dict()
         async with self.users.find() as cursor:
             async for user in cursor:
-                users.update(user)
+                users[user.get("_id")] = user
         return users
     
     # TODO: Replace return type from `any` to user class
@@ -53,7 +53,7 @@ class MovieFinderDB(object):
         
         - A user by the given username already exists
         """
-        if await self.GetUserByUsername(username): raise Exception("User already exists")
+        if await self.GetUserByUsername(username) is not None: raise Exception("User already exists")
         createdDate = datetime.now(timezone.utc)
         result = await self.users.insert_one({"username": username, "pwh": pwh, "created": createdDate})
         return result.inserted_id
