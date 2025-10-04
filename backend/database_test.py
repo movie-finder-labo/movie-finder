@@ -18,7 +18,9 @@ async def main():
     print(await db.DeleteUser("lol"))
     print(await db.GetUserByUsername("lol"))
     try:
-        print(await db.CreateUser("lol", "bad password"))
+        id = await db.CreateUser("lol", "bad password")
+        print(id)
+        print(await db.GetUserById(id))
     except Exception as ex:
         print(f"User lol already exists: {ex}")
     print(await db.GetUsers())

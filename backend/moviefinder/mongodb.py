@@ -37,6 +37,9 @@ class MovieFinderDB(object):
         """ Tries to get a user by it's password hash """
         return await self.users.find_one({"pwh": pwh})
 
+    async def GetUserById(self, id: ObjectId):
+        return await self.users.find_one({"_id": id})
+
     # TODO: Maybe integrate the password hashing algorithim with this function
     # TODO: Replace return type from `any` to user class
     async def CreateUser(self, username: str, pwh: str) -> ObjectId:
