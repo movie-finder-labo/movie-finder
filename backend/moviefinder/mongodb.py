@@ -2,6 +2,7 @@ from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.asynchronous.collection import AsyncCollection
 from bson.objectid import ObjectId
+from datetime import datetime, timezone
 
 class MovieFinderDB(object):
     """ MongoDB based Database wrapper for MovieFinder """
@@ -24,7 +25,6 @@ class MovieFinderDB(object):
         async with self.users.find() as cursor:
             async for user in cursor:
                 users.update(user)
-        
         return users
         
     # TODO: Replace return type from `any` to user class
@@ -45,7 +45,8 @@ class MovieFinderDB(object):
         - A user by the given username already exists
         """
         if await self.GetUserByUsername(username): raise Exception("User already exists")
-        result = await self.users.insert_one({"username": username, "pwh": pwh})
+        createdDate = datetime.now(timezone.utc)
+        result = await self.users.insert_one({"username": username, "pwh": pwh, "created": createdDate})
         return result.inserted_id
     
     async def DeleteUser(self, username: str) -> bool:
