@@ -8,3 +8,7 @@ __pycache__/
 .vscode/
 .idea/
 .DS_Store
+# dotenv
+.env
+# visual studio code
+*.code-workspace
