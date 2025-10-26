@@ -23,3 +23,4 @@ DEPENDENCIES:
 MODULES:
 pip install pymongo
 pip install python-dotenv
+pip install pytest-asyncio
