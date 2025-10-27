@@ -1,0 +1,34 @@
+1. Du skal ændre dit working dir til:
+    .\movie-finder\backend\Test\Jest
+
+2. Du skal installerer jest
+    npm i --save-dev jest
+
+3. Nu kan du køre teste med
+    npm test
+
+De function du vil teste skal eksporteres således:
+    function test1() {
+    print("test")
+    }
+
+    function test2() {
+    print("test2")
+    }
+
+    module.exports = {test, test 2}
+
+Din test fil skal navngives efter hvad den originale fil hedder + .test.js
+For at teste, skal du bruge test funktionen. Den tager 2 parametre, navnet på testen og en funktion
+
+test('Testing the sum function', () => {
+  expect(sum(2, 3)).toBe(5)
+})
+
+Du bruger expect() til kalde den funktion du vil teste og du kan bruge metoden .toBe() for at give et tilsvarende resultat.
+Du skal bruge metode .toEqual i funktioner med arrays, da toBe() kalkulerer hvor arraysene er i memory.
+
+test('Testing the cloning function', () => {
+    expect(cloneArray([1,2])).toEqual([1,2])
+})
+
