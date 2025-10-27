@@ -1,6 +1,8 @@
 node_modules/
 dist/
 __pycache__/
+# Ratings data
+ml-32m/
 *.pyc
 .venv/
 .env
