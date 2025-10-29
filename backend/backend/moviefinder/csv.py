@@ -54,7 +54,9 @@ def formatCSVData(data: dict):
                 i = c.get("_idx", 0)
                 x = d[i]
                 xId = x and x["movieId"] or None
+                
                 if x and xId == id:
+                    if (xId == "193567"): print(x)
                     return x
                 elif x is not None:
                     c[xId] = x
@@ -83,6 +85,7 @@ def formatCSVData(data: dict):
             "mood": moodLookup and moodLookup["tag"] or "N/A",
             "ageSuitability": "N/A" # ??
         }
+        if (id =="193567"):print(fm)
         return fm
     
     fms = {}
@@ -90,18 +93,19 @@ def formatCSVData(data: dict):
         fms[movie["movieId"]] = formatMovie(movie)
     return fms
 
-def InitializeMovieData() -> list:
+def InitializeMovieData() -> dict:
     """ Finds and loads all .cvs files located in ../movie-finder/data/* and initialises movie data objects and stores them in the global variable 'MovieData'. Repeated calls to this function just returns the already loaded cache."""
     global MovieData
     global CSVData
     
     # Don't load twice
     try:
-        list(MovieData.values())[0]
+        data = list(MovieData.values())
+        data[0]
         return MovieData
     except IndexError:
         try:
-            for fp in GetDataFiles(): # e.g data/movies.csv
+            for fp in GetDataFiles(): # e.g data/movies.csv, data/ratings.csv
                 data = DeserializeCSV(fp)
                 if fp != dataFilePath + "movies": data.reverse() # All the files are ordered by movieId, we need to reverse to setup performance boost for the formatCSVData function. The movie file doesn't matter.
                 CSVData[fp.removeprefix(dataFilePath).removesuffix(dataFileExtension)] = data
@@ -110,7 +114,7 @@ def InitializeMovieData() -> list:
             print(f"CVS file initialization failed: {e}")
             MovieData = {} # Roll back any changes
         finally:
-            return list(MovieData.values())
+            return MovieData
 
 def IsCSV(path: str) -> bool:
     """ Checks if the file extension of a file matches with .csv """

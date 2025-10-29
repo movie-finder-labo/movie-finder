@@ -24,7 +24,9 @@ def ask():
         ai_response = ask_openai(user_message)
         
         try:
-            data = InitializeMovieData()[1:10]
+            # Grab the last 13 elements and restore their original order (movie data is reversed by default)
+            data = list(InitializeMovieData().values())[-13:]
+            data.reverse()
         except IndexError:
             pass
         except Exception as e:

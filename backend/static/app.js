@@ -68,7 +68,7 @@ function renderMovies(movieList, showMatchScore = true) {
             <img src="${movie.poster}" alt="${movie.title}" class="movie-poster">
             <div class="movie-info">
                 <div class="movie-title">${movie.title}</div>
-                <div class="movie-year">${movie.year} • Rating: ${movie.rating}/10</div>
+                <div class="movie-year">${movie.year} • Rating: ${movie.rating == "N/A" ? movie.rating : movie.rating + ("/10")}</div>
                 <div class="movie-genres">
                     ${movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
                 </div>
