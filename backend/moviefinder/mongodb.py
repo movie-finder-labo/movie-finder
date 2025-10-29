@@ -13,7 +13,7 @@ class MovieFinderDB(object):
         """
         self.client: AsyncMongoClient = AsyncMongoClient(host=uri)
         self.db: AsyncDatabase = self.client[databaseName]
-        self.users: AsyncCollection = self.db["users"]
+        self.users: AsyncCollection = self.db["users"
     
     async def Connect(self) -> None:
         """ Try the connection to the mongodb database. Not necessary, but can be used for initial error handling. """

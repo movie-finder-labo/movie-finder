@@ -1,35 +1,36 @@
-from flask import request, jsonify, render_template, Blueprint, session, redirect, url_for
-import asyncio
+from flask import request, jsonify, render_template, Blueprint
 
-user_bp = Blueprint("user", __name__)
+from backend.moviefinder.mongodb import MovieFinderDB
 
-@user_bp.route('/login', methods=['GET', 'POST'])
-def login():
+user_bp = Blueprint("user_bp", __name__, url_prefix="/")
+
+@user_bp.route('/')
+def homepage():
+    return render_template("homepage.html")
+user_bp = Blueprint("user", __name__, url_prefix="/user")
+
+@user_bp.route("/register", methods=['GET', 'POST'])
+async def register():
     if request.method == "GET":
-        return render_template("index.html")  # This will show the login modal
+        return render_template("userRegistration.html")
+
     elif request.method == "POST":
-        data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
-        
-        # TODO: Add actual authentication logic
-        if username and password:
-            session['user'] = username
-            return jsonify({"success": True, "message": "Login successful"})
-        return jsonify({"success": False, "message": "Invalid credentials"})
+        db = MovieFinderDB("localhost:27017", "MovieFinder")
+        username = request.form['username']
+        password = request.form['password']
 
-@user_bp.route('/register', methods=['POST'])
-def register():
+        if not username or not password:
+            return jsonify({'Error': 'Username and password are required'}), 400
+
+        try:
+            user_id = await db.CreateUser(username, pwh=password)
+            return jsonify({"message": "User created", "id": str(user_id)}), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
+
+
+@user_bp.route("/login", methods=['POST'])
+def login():
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    
-    # TODO: Add actual registration logic
-    if username and password:
-        return jsonify({"success": True, "message": "Registration successful"})
-    return jsonify({"success": False, "message": "Registration failed"})
-
-@user_bp.route('/logout')
-def logout():
-    session.pop('user', None)
-    return redirect(url_for('index'))
+    username = data['username']
+    password = data['password']
