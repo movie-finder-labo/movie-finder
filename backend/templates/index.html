@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoviesNemt AI - Personalized Movie Discovery</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                <div>
+                    <h1>MoviesNemt AI</h1>
+                    <p class="subtitle">Your personalized movie discovery platform</p>
+                </div>
+            </div>
+            <div class="user-actions">
+                <div class="user-profile" id="userProfile" style="display: none;">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-name" id="userName">User</div>
+                </div>
+                <button class="btn btn-primary" id="loginBtn">Login</button>
+                <button class="btn btn-secondary" id="profileBtn" style="display: none;">Edit Profile</button>
+                <button class="btn btn-secondary" id="logoutBtn" style="display: none;">Logout</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2>Movie Recommendation Assistant</h2>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai-message">
+                        Hi! I'm your MoviesNemt AI assistant. Tell me what kind of movies you're in the mood for, and I'll help you find the perfect one!
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="userInput" placeholder="Ask for movie recommendations...">
+                    <button id="sendButton">Send</button>
+                </div>
+            </div>
+
+            <div class="movies-container">
+                <div class="movies-header">
+                    <h2>Recommended For You</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search movies...">
+                        <button id="searchButton">Search</button>
+                    </div>
+                </div>
+                <div class="movies-grid" id="moviesGrid">
+                    <!-- Movie cards will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>CineMatch AI &copy; 2023 - Your personal movie recommendation assistant</p>
+        </footer>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Welcome to CineMatch AI</h2>
+                <p>Login or create an account to get personalized recommendations</p>
+            </div>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Enter your username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" id="submitLogin">Login</button>
+            <p style="text-align: center; margin-top: 15px; color: var(--text-light);">Don't have an account? <a href="#" style="color: var(--primary);" id="showProfileSetup">Sign up</a></p>
+        </div>
+    </div>
+
+    <!-- Profile Setup Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Your Profile</h2>
+                <p>Help us understand your movie preferences for better recommendations</p>
+            </div>
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" placeholder="Enter your full name">
+            </div>
+            <div class="form-group">
+                <label for="age">Age</label>
+                <input type="number" id="age" placeholder="Enter your age">
+            </div>
+            <div class="form-group">
+                <label>Favorite Genres</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="action" value="Action">
+                        <label for="action">Action</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="comedy" value="Comedy">
+                        <label for="comedy">Comedy</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="drama" value="Drama">
+                        <label for="drama">Drama</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="sci-fi" value="Sci-Fi">
+                        <label for="sci-fi">Sci-Fi</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="horror" value="Horror">
+                        <label for="horror">Horror</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="romance" value="Romance">
+                        <label for="romance">Romance</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="thriller" value="Thriller">
+                        <label for="thriller">Thriller</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="fantasy" value="Fantasy">
+                        <label for="fantasy">Fantasy</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="mood">What's your typical movie mood?</label>
+                <select id="mood">
+                    <option value="">Select your typical mood</option>
+                    <option value="light">Light and Fun</option>
+                    <option value="thoughtful">Thoughtful and Deep</option>
+                    <option value="exciting">Exciting and Thrilling</option>
+                    <option value="emotional">Emotional and Dramatic</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="frequency">How often do you watch movies?</label>
+                <select id="frequency">
+                    <option value="">Select frequency</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="rarely">Rarely</option>
+                </select>
+            </div>
+            <div class="profile-completion">
+                <p>Profile Completion: <span id="completionPercent">0%</span></p>
+                <div class="profile-completion-bar">
+                    <div class="profile-completion-fill" id="completionBar"></div>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" id="saveProfile">Save Profile</button>
+        </div>
+    </div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
