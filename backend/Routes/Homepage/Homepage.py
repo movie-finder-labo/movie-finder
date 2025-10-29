@@ -5,5 +5,5 @@ homepage_bp = Blueprint("homepage", __name__, url_prefix="/")
 
 @homepage_bp.route("/")
 def homepage():
-    return render_template("homepage.html")
+    return render_template("index.html")
 
