@@ -4,7 +4,6 @@ from pymongo.asynchronous.collection import AsyncCollection
 from bson.objectid import ObjectId
 from datetime import datetime, timezone
 
-
 class MovieFinderDB(object):
     """ MongoDB based Database wrapper for MovieFinder """
 

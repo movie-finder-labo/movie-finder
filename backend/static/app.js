@@ -26,39 +26,7 @@ let userPreferences = {
     age: 0
 };
 
-// Sample movie data
-const movies = [
-    {
-        id: 1,
-        title: "Inception",
-        year: 2010,
-        genres: ["Sci-Fi", "Action", "Thriller"],
-        poster: "https://via.placeholder.com/300x450/252b3d/8a8f98?text=Inception",
-        rating: 8.8,
-        mood: "thoughtful",
-        ageSuitability: 13
-    },
-    {
-        id: 2,
-        title: "The Shawshank Redemption",
-        year: 1994,
-        genres: ["Drama"],
-        poster: "https://via.placeholder.com/300x450/252b3d/8a8f98?text=Shawshank",
-        rating: 9.3,
-        mood: "emotional",
-        ageSuitability: 16
-    },
-    {
-        id: 3,
-        title: "The Dark Knight",
-        year: 2008,
-        genres: ["Action", "Crime", "Drama"],
-        poster: "https://via.placeholder.com/300x450/252b3d/8a8f98?text=Dark+Knight",
-        rating: 9.0,
-        mood: "exciting",
-        ageSuitability: 13
-    }
-];
+let movies = []
 
 // Check if user is logged in
 function checkLoginStatus() {
@@ -84,7 +52,8 @@ function updateUIForLoggedInUser() {
 // Render movies to the grid
 function renderMovies(movieList, showMatchScore = true) {
     moviesGrid.innerHTML = '';
-    movieList.forEach(movie => {
+    console.log(typeof(movieList))
+    Object.values(movieList).forEach(movie => {
         const movieCard = document.createElement('div');
         movieCard.className = 'movie-card';
 
@@ -99,7 +68,7 @@ function renderMovies(movieList, showMatchScore = true) {
             <img src="${movie.poster}" alt="${movie.title}" class="movie-poster">
             <div class="movie-info">
                 <div class="movie-title">${movie.title}</div>
-                <div class="movie-year">${movie.year} • Rating: ${movie.rating}/10</div>
+                <div class="movie-year">${movie.year} • Rating: ${movie.rating == "N/A" ? movie.rating : movie.rating + ("/10")}</div>
                 <div class="movie-genres">
                     ${movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
                 </div>
@@ -147,12 +116,16 @@ function getRecommendedMovies() {
 }
 
 // Chat functionality
-function addMessage(message, isUser) {
+function addMessage(message, isUser, movieData) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
     messageDiv.textContent = message;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (movieData) {
+        movies = movieData
+        renderMovies(movies, false)
+    }
 }
 
 // Enhanced AI response with OpenAI
@@ -173,6 +146,7 @@ async function getAIResponse(userMessage) {
         });
 
         const data = await response.json();
+        console.log(data)
         
         if (data.success) {
             return data.response;
@@ -228,17 +202,13 @@ async function sendMessage() {
 
         try {
             const aiResponse = await getAIResponse(message);
-            
-            // Remove typing indicator
-            chatMessages.removeChild(typingIndicator);
-            
-            addMessage(aiResponse, false);
+            addMessage(aiResponse.ai_response, false, aiResponse.data);
         } catch (error) {
-            // Remove typing indicator
-            chatMessages.removeChild(typingIndicator);
-            
             console.error('Error getting AI response:', error);
             addMessage("Sorry, I encountered an error. Please try again.", false);
+        } finally {
+            // Remove typing indicator
+            chatMessages.removeChild(typingIndicator);
         }
     }
 }
@@ -481,7 +451,7 @@ function generateAutoRecommendations() {
             setTimeout(async () => {
                 try {
                     const aiResponse = await getAIResponse(autoMessage);
-                    addMessage(aiResponse, false);
+                    addMessage(aiResponse, false, aiResponse.data);
                 } catch (error) {
                     console.error('Auto-recommendation error:', error);
                     addMessage("Based on your profile, I recommend checking out popular movies in your preferred genres!", false);

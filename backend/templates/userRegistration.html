@@ -1,0 +1,38 @@
+{%extends 'base.html'%}
+
+{% block head %}
+<title>My Website</title>
+{% endblock %}
+
+{% block body%}
+ <header>
+    <h1>🌸 Welcome to My Website</h1>
+    <p>A clean and simple HTML + CSS layout</p>
+    <nav>
+      <a href="#about">About</a>
+      <a href="#projects">Projects</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="about">
+      <h2>Create user</h2>
+      <form method="POST" action ="/user/register">
+          <label for="uname">Username: </label>
+          <input type="text" id="uname" name="username"><br><br>
+          <label for="pword">Password: </label>
+          <input type="text" id="pword" name="password"><br><br>
+          <input type="submit" value="Submit">
+      </form>
+
+<p>Click on the submit button to submit the form.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 My Pretty Website | Built with ❤️ and HTML+CSS</p>
+  </footer>
+</body>
+{% endblock %}
+
