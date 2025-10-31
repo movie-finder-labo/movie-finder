@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 class MovieFinderDB(object):
     """ MongoDB based Database wrapper for MovieFinder """
+
     def __init__(self, uri: str, databaseName: str) -> None:
         """ Creates a new mongodb connection. Contains functionality for the following collections:
 
@@ -14,7 +15,7 @@ class MovieFinderDB(object):
         self.client: AsyncMongoClient = AsyncMongoClient(host=uri)
         self.db: AsyncDatabase = self.client[databaseName]
         self.users: AsyncCollection = self.db["users"]
-    
+
     async def Connect(self) -> None:
         """ Try the connection to the mongodb database. Not necessary, but can be used for initial error handling. """
         await self.client.aconnect()
@@ -62,7 +63,3 @@ class MovieFinderDB(object):
         """ Deletes a user by the given username. """
         result = await self.users.delete_one({"username": username})
         return bool(result.deleted_count)
-
-    async def DeleteAllUsers(self):
-        result = await self.users.drop()
-        return result
