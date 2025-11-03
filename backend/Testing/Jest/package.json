@@ -2,7 +2,7 @@
   "name": "jest",
   "version": "1.0.0",
   "description": "",
-  "main": "test_function.js",
+  "main": "JestDocumentation/test_function.js",
   "scripts": {
     "test": "jest"
   },

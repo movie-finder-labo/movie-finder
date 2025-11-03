@@ -20,7 +20,7 @@ def TestDeserializeDirectory(path: str):
 if __name__ == "__main__":
     try:
         print(f"Current working directory: {getcwd()}.\nBeginning deserialization...")
-        TestDeserializeDirectory("data")
+        TestDeserializeDirectory("../data")
     except KeyboardInterrupt: # CTRL + C
         print("Keyboard interrupt.")
     finally:

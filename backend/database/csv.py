@@ -10,39 +10,7 @@ MovieData = {}
 CSVData = {}
 
 def formatCSVData(data: dict):
-    """ Formats raw CVS data across all the links, movies, ratings and tags datafiles and formats them into one dict.
-    Sample movies
-    {
-        id: 1,
-        title: "Inception",
-        year: 2010,
-        genres: ["Sci-Fi", "Action", "Thriller"],
-        poster: "https://via.placeholder.com/300x450/252b3d/8a8f98?text=Inception",
-        rating: 8.8,
-        mood: "thoughtful",
-        ageSuitability: 13
-    },
-    {
-        id: 2,
-        title: "The Shawshank Redemption",
-        year: 1994,
-        genres: ["Drama"],
-        poster: "https://via.placeholder.com/300x450/252b3d/8a8f98?text=Shawshank",
-        rating: 9.3,
-        mood: "emotional",
-        ageSuitability: 16
-    },
-    {
-        id: 3,
-        title: "The Dark Knight",
-        year: 2008,
-        genres: ["Action", "Crime", "Drama"],
-        poster: "https://via.placeholder.com/300x450/252b3d/8a8f98?text=Dark+Knight",
-        rating: 9.0,
-        mood: "exciting",
-        ageSuitability: 13
-    }
-    """
+    print(data)
     cache = {} # Dgaf about space complexity. Assume at least one or more related rows per movieId in the other files.
     def Lookup(key: str, id):
         d = data[key]
