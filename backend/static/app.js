@@ -21,8 +21,6 @@ const userAvatar = document.getElementById('userAvatar');
 let currentUser = null;
 let userPreferences = {
     genres: [],
-    mood: '',
-    frequency: '',
     age: 0
 };
 
@@ -49,6 +47,103 @@ function updateUIForLoggedInUser() {
     userAvatar.textContent = (currentUser.fullName || currentUser.username).charAt(0).toUpperCase();
 }
 
+// Get user rating stars HTML
+function getUserRatingStars(movieId) {
+    const userRating = getUserRating(movieId);
+    let starsHtml = '<div class="rating-stars">';
+    
+    for (let i = 1; i <= 5; i++) {
+        const isActive = i <= userRating ? 'active' : '';
+        starsHtml += `<span class="star ${isActive}" data-rating="${i}">★</span>`;
+    }
+    
+    starsHtml += '</div>';
+    return starsHtml;
+}
+
+// Get user rating for a movie
+function getUserRating(movieId) {
+    if (!currentUser) return 0;
+    
+    const userRatings = JSON.parse(localStorage.getItem('userRatings')) || {};
+    const userSpecificRatings = userRatings[currentUser.username] || {};
+    return userSpecificRatings[movieId] || 0;
+}
+
+// Save user rating for a movie
+function saveUserRating(movieId, rating) {
+    if (!currentUser) return;
+    
+    let userRatings = JSON.parse(localStorage.getItem('userRatings')) || {};
+    if (!userRatings[currentUser.username]) {
+        userRatings[currentUser.username] = {};
+    }
+    
+    userRatings[currentUser.username][movieId] = rating;
+    localStorage.setItem('userRatings', JSON.stringify(userRatings));
+}
+
+// Add event listeners to rating stars
+function addRatingEventListeners() {
+    const stars = document.querySelectorAll('.star');
+    stars.forEach(star => {
+        star.addEventListener('click', handleStarClick);
+    });
+}
+
+// Handle star click event
+function handleStarClick(event) {
+    if (!currentUser) {
+        addMessage("Please log in to rate movies!", false);
+        return;
+    }
+    
+    const star = event.target;
+    const rating = parseInt(star.getAttribute('data-rating'));
+    const movieId = star.closest('.user-rating').getAttribute('data-movie-id');
+    
+    saveUserRating(movieId, rating);
+    
+    // Update the stars visually
+    const stars = star.parentElement.querySelectorAll('.star');
+    stars.forEach((s, index) => {
+        if (index < rating) {
+            s.classList.add('active');
+        } else {
+            s.classList.remove('active');
+        }
+    });
+    
+    // Optional: Send rating to backend
+    sendRatingToBackend(movieId, rating);
+}
+
+// Send rating to backend (optional)
+async function sendRatingToBackend(movieId, rating) {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch('/movie/rate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: currentUser.username,
+                movieId: movieId,
+                rating: rating
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            console.log('Rating saved to backend');
+        }
+    } catch (error) {
+        console.error('Failed to save rating to backend:', error);
+    }
+}
+
 // Render movies to the grid
 function renderMovies(movieList, showMatchScore = true) {
     moviesGrid.innerHTML = '';
@@ -72,29 +167,31 @@ function renderMovies(movieList, showMatchScore = true) {
                 <div class="movie-genres">
                     ${movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
                 </div>
+                <div class="user-rating" data-movie-id="${movie.id}">
+                    <div class="rating-label">Your Rating:</div>
+                    ${getUserRatingStars(movie.id)}
+                </div>
             </div>
         `;
         moviesGrid.appendChild(movieCard);
     });
+    
+    // Add event listeners for rating stars
+    addRatingEventListeners();
 }
 
 // Calculate match score for recommendations
 function calculateMatchScore(movie) {
     let score = 0;
 
-    // Genre match
+    // Genre match - more weight since we only have genres now
     const genreMatches = movie.genres.filter(genre =>
         userPreferences.genres.includes(genre)
     ).length;
-    score += (genreMatches / movie.genres.length) * 40;
-
-    // Mood match
-    if (movie.mood === userPreferences.mood) {
-        score += 30;
-    }
+    score += (genreMatches / movie.genres.length) * 70;
 
     // Age suitability
-    if (userPreferences.age >= movie.ageSuitability) {
+    if (userPreferences.age >= (movie.ageSuitability || 13)) {
         score += 30;
     }
 
@@ -134,7 +231,7 @@ async function getAIResponse(userMessage) {
         // Add user context to the message if logged in
         let enhancedMessage = userMessage;
         if (currentUser) {
-            enhancedMessage = `User preferences: ${userPreferences.genres.join(', ')} genres, ${userPreferences.mood} mood, age ${userPreferences.age}. Question: ${userMessage}`;
+            enhancedMessage = `User preferences: ${userPreferences.genres.join(', ')} genres, age ${userPreferences.age}. Question: ${userMessage}`;
         }
 
         const response = await fetch('/chat/ask', {
@@ -213,29 +310,6 @@ async function sendMessage() {
     }
 }
 
-// Get structured recommendations based on user profile
-async function getStructuredRecommendations() {
-    if (!currentUser) return null;
-    
-    const preferences = `User likes ${userPreferences.genres.join(', ')} genres, prefers ${userPreferences.mood} movies, and is ${userPreferences.age} years old.`;
-    
-    try {
-        const response = await fetch('/chat/recommend', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ preferences: preferences })
-        });
-
-        const data = await response.json();
-        return data.success ? data.recommendations : null;
-    } catch (error) {
-        console.error('Structured recommendations error:', error);
-        return null;
-    }
-}
-
 // Login functionality with Flask backend
 submitLogin.addEventListener('click', async () => {
     const username = document.getElementById('username').value;
@@ -291,14 +365,12 @@ showProfileSetup.addEventListener('click', (e) => {
 saveProfile.addEventListener('click', async () => {
     const fullName = document.getElementById('fullName').value;
     const age = parseInt(document.getElementById('age').value);
-    const mood = document.getElementById('mood').value;
-    const frequency = document.getElementById('frequency').value;
 
     // Get selected genres
     const genreCheckboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]:checked');
     const genres = Array.from(genreCheckboxes).map(cb => cb.value);
 
-    if (fullName && age && genres.length > 0 && mood && frequency) {
+    if (fullName && age && genres.length > 0) {
         try {
             const response = await fetch('/user/register', {
                 method: 'POST',
@@ -310,9 +382,7 @@ saveProfile.addEventListener('click', async () => {
                     password: 'default123',
                     fullName,
                     age,
-                    genres,
-                    mood,
-                    frequency
+                    genres
                 })
             });
 
@@ -325,7 +395,7 @@ saveProfile.addEventListener('click', async () => {
                     fullName: fullName
                 };
 
-                userPreferences = { genres, mood, frequency, age };
+                userPreferences = { genres, age };
 
                 // Save to localStorage
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -339,7 +409,7 @@ saveProfile.addEventListener('click', async () => {
                 renderMovies(getRecommendedMovies());
 
                 // Welcome message with OpenAI
-                addMessage(`Welcome, ${fullName}! I've learned your preferences for ${genres.join(', ')} movies with a ${mood} mood. Ask me for personalized recommendations!`, false);
+                addMessage(`Welcome, ${fullName}! I've learned your preferences for ${genres.join(', ')} movies. Ask me for personalized recommendations!`, false);
             } else {
                 alert('Registration failed: ' + data.message);
             }
@@ -348,7 +418,7 @@ saveProfile.addEventListener('click', async () => {
             alert('Registration failed. Please try again.');
         }
     } else {
-        alert('Please complete all fields in the profile');
+        alert('Please complete all fields and select at least one genre');
     }
 });
 
@@ -358,7 +428,7 @@ logoutBtn.addEventListener('click', () => {
     fetch('/user/logout')
         .then(() => {
             currentUser = null;
-            userPreferences = { genres: [], mood: '', frequency: '', age: 0 };
+            userPreferences = { genres: [], age: 0 };
 
             // Clear localStorage
             localStorage.removeItem('currentUser');
@@ -390,8 +460,6 @@ profileBtn.addEventListener('click', () => {
     // Populate form with current data
     document.getElementById('fullName').value = currentUser.fullName || '';
     document.getElementById('age').value = userPreferences.age || '';
-    document.getElementById('mood').value = userPreferences.mood || '';
-    document.getElementById('frequency').value = userPreferences.frequency || '';
 
     // Check genre boxes
     document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(cb => {
@@ -442,7 +510,7 @@ userInput.addEventListener('keypress', (e) => {
 // Auto-generate recommendations when user logs in with preferences
 function generateAutoRecommendations() {
     if (currentUser && userPreferences.genres.length > 0) {
-        const autoMessage = `Suggest 3 specific movie recommendations based on my preferences for ${userPreferences.genres.join(', ')} genres and ${userPreferences.mood} mood.`;
+        const autoMessage = `Suggest 3 specific movie recommendations based on my preferences for ${userPreferences.genres.join(', ')} genres.`;
         setTimeout(() => {
             sendButton.disabled = true;
             addMessage("Let me suggest some movies based on your profile...", false);

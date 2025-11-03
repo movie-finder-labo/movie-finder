@@ -1,10 +1,4 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
+/* ===== VARIABLES ===== */
 :root {
     --primary: #ff6b6b;
     --primary-dark: #ff5252;
@@ -14,6 +8,14 @@
     --darker: #252b3d;
     --text: #e0e0e0;
     --text-light: #8a8f98;
+}
+
+/* ===== BASE STYLES ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
@@ -32,6 +34,7 @@ body {
     gap: 20px;
 }
 
+/* ===== HEADER STYLES ===== */
 header {
     display: flex;
     justify-content: space-between;
@@ -68,6 +71,29 @@ h1 {
     align-items: center;
 }
 
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+}
+
+.user-name {
+    font-weight: bold;
+}
+
+/* ===== BUTTON STYLES ===== */
 .btn {
     padding: 10px 20px;
     border: none;
@@ -96,12 +122,14 @@ h1 {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* ===== MAIN CONTENT LAYOUT ===== */
 .main-content {
     display: flex;
     gap: 20px;
     height: calc(100vh - 200px);
 }
 
+/* ===== CHAT STYLES ===== */
 .chat-container {
     flex: 1;
     background-color: var(--dark-light);
@@ -185,6 +213,7 @@ h1 {
     background-color: var(--primary-dark);
 }
 
+/* ===== MOVIES STYLES ===== */
 .movies-container {
     flex: 2;
     background-color: var(--dark-light);
@@ -287,6 +316,42 @@ h1 {
     font-size: 0.8rem;
 }
 
+/* ===== RATING STYLES ===== */
+.user-rating {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--darker);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.rating-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.star {
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.star:hover {
+    color: gold;
+}
+
+.star.active {
+    color: gold;
+}
+
+/* ===== MOVIE BADGES ===== */
 .match-score {
     position: absolute;
     top: 10px;
@@ -309,17 +374,10 @@ h1 {
     border-radius: 12px;
     font-size: 0.7rem;
     font-weight: bold;
+    z-index: 10;
 }
 
-footer {
-    text-align: center;
-    padding: 20px 0;
-    color: var(--text-light);
-    font-size: 0.9rem;
-    border-top: 1px solid var(--darker);
-}
-
-/* Modal Styles */
+/* ===== MODAL STYLES ===== */
 .modal {
     display: none;
     position: fixed;
@@ -352,6 +410,7 @@ footer {
     margin-bottom: 10px;
 }
 
+/* ===== FORM STYLES ===== */
 .form-group {
     margin-bottom: 20px;
 }
@@ -362,7 +421,7 @@ footer {
     color: var(--text);
 }
 
-.form-group input, .form-group select {
+.form-group input {
     width: 100%;
     padding: 12px 15px;
     border-radius: 8px;
@@ -372,7 +431,7 @@ footer {
     outline: none;
 }
 
-.form-group input:focus, .form-group select:focus {
+.form-group input:focus {
     border-color: var(--primary);
 }
 
@@ -416,46 +475,16 @@ footer {
     transition: width 0.5s;
 }
 
-.user-profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+/* ===== FOOTER STYLES ===== */
+footer {
+    text-align: center;
+    padding: 20px 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    border-top: 1px solid var(--darker);
 }
 
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: white;
-}
-
-.user-name {
-    font-weight: bold;
-}
-
-.profile-actions {
-    display: flex;
-    gap: 10px;
-}
-
-@media (max-width: 1024px) {
-    .main-content {
-        flex-direction: column;
-        height: auto;
-    }
-
-    .movies-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-}
-
-
-/* Typing indicator */
+/* ===== TYPING INDICATOR ===== */
 .typing-indicator {
     background-color: var(--darker);
     padding: 12px 16px;
@@ -485,5 +514,17 @@ footer {
     40% { 
         transform: scale(1);
         opacity: 1;
+    }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1024px) {
+    .main-content {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
 }

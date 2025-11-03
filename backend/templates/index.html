@@ -99,61 +99,85 @@
                 <input type="number" id="age" placeholder="Enter your age">
             </div>
             <div class="form-group">
-                <label>Favorite Genres</label>
+                <label>Favorite Genres (Select at least one)</label>
                 <div class="checkbox-group">
                     <div class="checkbox-item">
                         <input type="checkbox" id="action" value="Action">
                         <label for="action">Action</label>
                     </div>
                     <div class="checkbox-item">
+                        <input type="checkbox" id="adventure" value="Adventure">
+                        <label for="adventure">Adventure</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="animation" value="Animation">
+                        <label for="animation">Animation</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="children" value="Children's">
+                        <label for="children">Children's</label>
+                    </div>
+                    <div class="checkbox-item">
                         <input type="checkbox" id="comedy" value="Comedy">
                         <label for="comedy">Comedy</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="crime" value="Crime">
+                        <label for="crime">Crime</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="documentary" value="Documentary">
+                        <label for="documentary">Documentary</label>
                     </div>
                     <div class="checkbox-item">
                         <input type="checkbox" id="drama" value="Drama">
                         <label for="drama">Drama</label>
                     </div>
                     <div class="checkbox-item">
-                        <input type="checkbox" id="sci-fi" value="Sci-Fi">
-                        <label for="sci-fi">Sci-Fi</label>
+                        <input type="checkbox" id="fantasy" value="Fantasy">
+                        <label for="fantasy">Fantasy</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="film-noir" value="Film-Noir">
+                        <label for="film-noir">Film-Noir</label>
                     </div>
                     <div class="checkbox-item">
                         <input type="checkbox" id="horror" value="Horror">
                         <label for="horror">Horror</label>
                     </div>
                     <div class="checkbox-item">
+                        <input type="checkbox" id="musical" value="Musical">
+                        <label for="musical">Musical</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="mystery" value="Mystery">
+                        <label for="mystery">Mystery</label>
+                    </div>
+                    <div class="checkbox-item">
                         <input type="checkbox" id="romance" value="Romance">
                         <label for="romance">Romance</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="sci-fi" value="Sci-Fi">
+                        <label for="sci-fi">Sci-Fi</label>
                     </div>
                     <div class="checkbox-item">
                         <input type="checkbox" id="thriller" value="Thriller">
                         <label for="thriller">Thriller</label>
                     </div>
                     <div class="checkbox-item">
-                        <input type="checkbox" id="fantasy" value="Fantasy">
-                        <label for="fantasy">Fantasy</label>
+                        <input type="checkbox" id="war" value="War">
+                        <label for="war">War</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="western" value="Western">
+                        <label for="western">Western</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="no-genres" value="(no genres listed)">
+                        <label for="no-genres">(no genres listed)</label>
                     </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="mood">What's your typical movie mood?</label>
-                <select id="mood">
-                    <option value="">Select your typical mood</option>
-                    <option value="light">Light and Fun</option>
-                    <option value="thoughtful">Thoughtful and Deep</option>
-                    <option value="exciting">Exciting and Thrilling</option>
-                    <option value="emotional">Emotional and Dramatic</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="frequency">How often do you watch movies?</label>
-                <select id="frequency">
-                    <option value="">Select frequency</option>
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="rarely">Rarely</option>
-                </select>
             </div>
             <div class="profile-completion">
                 <p>Profile Completion: <span id="completionPercent">0%</span></p>
@@ -165,6 +189,6 @@
         </div>
     </div>
 
-<script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
