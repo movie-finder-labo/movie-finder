@@ -1,0 +1,14 @@
+Jeg havde problemer med at jeg ikke kunne køre teste selvom jeg lavede pip install pycharm.
+
+Der var et problme med, at mine installed scripts ikke blev genkendt.
+
+Løsning:
+Add the user scripts folder to PATH
+
+Your scripts folder is most likely here:
+C:\Users\"Dig brugernavn"\AppData\Roaming\Python\Python313\Scripts
+OR HERE:
+C:\Users\"Dit brugernavn"\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\Scripts
+
+Then append \Scripts to the output path and add that to your system PATH.
+After adding it, restart PowerShell or PyCharm’s terminal, and try again
