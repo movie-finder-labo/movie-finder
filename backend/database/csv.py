@@ -141,7 +141,7 @@ def DeserializeCSV(path: str, deserializer=None) -> list[dict]:
     if not IsCSV(path): raise Exception("Must be a CSV file (.csv)")
     data: list[dict] = []
     with open(file=path, encoding="mac_roman", newline='') as csvFile:
-        reader = csv.reader(csvFile, quotechar = '|')
+        reader = csv.reader(csvFile, quotechar ='|')
         cols = next(reader) # Grab column names on the first line of the CSV file
         for row in reader:
             data.append((deserializer if deserializer is not None else DefaultDeserializer)(row, cols))

@@ -1,11 +1,10 @@
 import os
-import json
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env from project root - but don't initialize client here
+# Load ..env from project root - but don't initialize client here
 ROOT = Path(__file__).resolve().parents[1]
-load_dotenv(ROOT / ".env")
+load_dotenv(ROOT / "..env")
 
 def get_openai_client():
     """Get OpenAI client - initialize only when needed"""
@@ -14,7 +13,7 @@ def get_openai_client():
     
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        raise RuntimeError(f"Missing OPENAI_API_KEY in {ROOT / '.env'}")
+        raise RuntimeError(f"Missing OPENAI_API_KEY in {ROOT / '..env'}")
     
     return OpenAI(api_key=api_key)
 

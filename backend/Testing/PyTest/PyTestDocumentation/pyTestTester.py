@@ -40,7 +40,7 @@ def test_delete_user(db):
     assert db.addUser("user1", "user@email.com") == True
     assert db.deleteUser("user1") is None
 
-#Mocking is used when external services are in play. That could be anything from an api to the db
+#Mocking is used when external Services are in play. That could be anything from an api to the db
 #Makes sure test is not dependent on external factors(API, DB) only checks if your code works
 
 def test_get_weather(mocker):

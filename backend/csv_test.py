@@ -1,4 +1,4 @@
-from backend.moviefinder.csv import DeserializeCSV, GetDataFiles
+from backend.database.csv import DeserializeCSV, GetDataFiles
 from os import getcwd
 from time import time
 

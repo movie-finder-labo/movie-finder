@@ -1,6 +1,6 @@
 from flask import request, jsonify, render_template, Blueprint
 
-from backend.moviefinder.mongodb import MovieFinderDB
+from backend.database.mongodb import MovieFinderDB
 
 user_bp = Blueprint("user_bp", __name__, url_prefix="/")
 
@@ -11,10 +11,8 @@ user_bp = Blueprint("user", __name__, url_prefix="/user")
 
 @user_bp.route("/register", methods=['GET', 'POST'])
 async def register():
-    if request.method == "GET":
-        return render_template("userRegistration.html")
 
-    elif request.method == "POST":
+    if request.method == "POST":
         db = MovieFinderDB("localhost:27017", "MovieFinder")
         username = request.form['username']
         password = request.form['password']
