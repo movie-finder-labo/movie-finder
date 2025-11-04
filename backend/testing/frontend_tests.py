@@ -51,7 +51,7 @@ def test_javascript_functions():
     
     try:
         # Read the app.js file
-        js_path = os.path.join('static', 'app.js')
+        js_path = os.path.join('../static', 'app.js')
         with open(js_path, 'r', encoding='utf-8') as f:
             js_content = f.read()
         
@@ -91,7 +91,7 @@ def test_chat_functionality():
     print("testing chat Functionality...")
     
     try:
-        js_path = os.path.join('static', 'app.js')
+        js_path = os.path.join('../static', 'app.js')
         with open(js_path, 'r', encoding='utf-8') as f:
             js_content = f.read()
         
@@ -122,7 +122,7 @@ def test_ai_system():
     print("testing AI Response System...")
     
     try:
-        js_path = os.path.join('static', 'app.js')
+        js_path = os.path.join('../static', 'app.js')
         with open(js_path, 'r', encoding='utf-8') as f:
             js_content = f.read()
         
@@ -153,7 +153,7 @@ def test_recommendation_system():
     print("testing Recommendation System...")
     
     try:
-        js_path = os.path.join('static', 'app.js')
+        js_path = os.path.join('../static', 'app.js')
         with open(js_path, 'r', encoding='utf-8') as f:
             js_content = f.read()
         
@@ -184,7 +184,7 @@ def test_rating_system():
     print("testing Rating System...")
     
     try:
-        js_path = os.path.join('static', 'app.js')
+        js_path = os.path.join('../static', 'app.js')
         with open(js_path, 'r', encoding='utf-8') as f:
             js_content = f.read()
         
@@ -248,7 +248,7 @@ def main():
 
 if __name__ == '__main__':
     # Make sure we're in the right directory
-    if not os.path.exists('main.py'):
+    if not os.path.exists('../main.py'):
         print("Error: Please run this from your project root directory (where main.py is)")
         sys.exit(1)
     
