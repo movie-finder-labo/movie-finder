@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Flask Frontend Test Runner
+Flask Frontend test Runner
 Tests critical frontend functionality
 """
 import sys
@@ -8,8 +8,8 @@ import os
 from flask import Flask
 
 def test_flask_routes():
-    """Test basic Flask route functionality"""
-    print("Testing Flask Routes...")
+    """test basic Flask route functionality"""
+    print("testing Flask routes...")
     
     try:
         # Import your Flask app
@@ -18,7 +18,7 @@ def test_flask_routes():
         app.testing = True
         client = app.test_client()
         
-        # Test homepage
+        # test homepage
         response = client.get('/')
         if response.status_code == 200 and b'MoviesNemt AI' in response.data:
             print("  PASS - Homepage loads correctly")
@@ -26,7 +26,7 @@ def test_flask_routes():
             print("  FAIL - Homepage loading")
             return False
         
-        # Test static files
+        # test static files
         response = client.get('/static/style.css')
         if response.status_code == 200:
             print("  PASS - CSS file accessible")
@@ -46,8 +46,8 @@ def test_flask_routes():
         return False
 
 def test_javascript_functions():
-    """Test JavaScript function availability"""
-    print("Testing JavaScript Functions...")
+    """test JavaScript function availability"""
+    print("testing JavaScript Functions...")
     
     try:
         # Read the app.js file
@@ -57,7 +57,7 @@ def test_javascript_functions():
         
         # Check for critical functions
         functions_to_check = [
-            ('addMessage', 'Chat message function'),
+            ('addMessage', 'chat message function'),
             ('sendMessage', 'Message sending function'),
             ('getAIResponse', 'AI response function'),
             ('getBasicAIResponse', 'Fallback response function'),
@@ -87,8 +87,8 @@ def test_javascript_functions():
         return False
 
 def test_chat_functionality():
-    """Test chat-related functionality"""
-    print("Testing Chat Functionality...")
+    """test chat-related functionality"""
+    print("testing chat Functionality...")
     
     try:
         js_path = os.path.join('static', 'app.js')
@@ -97,10 +97,10 @@ def test_chat_functionality():
         
         checks = [
             ('userInput.value.trim()', 'Input validation'),
-            ('addMessage(message, true)', 'User message handling'),
+            ('addMessage(message, true)', 'user message handling'),
             ('addMessage(aiResponse', 'AI response handling'),
             ('typing-indicator', 'Typing indicator'),
-            ('chatMessages.appendChild', 'Chat DOM updates')
+            ('chatMessages.appendChild', 'chat DOM updates')
         ]
         
         all_good = True
@@ -114,12 +114,12 @@ def test_chat_functionality():
         return all_good
         
     except Exception as e:
-        print(f"  FAIL - Chat functionality test error: {e}")
+        print(f"  FAIL - chat functionality test error: {e}")
         return False
 
 def test_ai_system():
-    """Test AI response system"""
-    print("Testing AI Response System...")
+    """test AI response system"""
+    print("testing AI Response System...")
     
     try:
         js_path = os.path.join('static', 'app.js')
@@ -130,7 +130,7 @@ def test_ai_system():
             ('getAIResponse', 'AI response function'),
             ('getBasicAIResponse', 'Fallback system'),
             ('fetch', 'API calls'),
-            ('/chat/ask', 'Chat endpoint integration'),
+            ('/chat/ask', 'chat endpoint integration'),
             ('catch (error)', 'Error handling')
         ]
         
@@ -149,8 +149,8 @@ def test_ai_system():
         return False
 
 def test_recommendation_system():
-    """Test movie recommendation functionality"""
-    print("Testing Recommendation System...")
+    """test movie recommendation functionality"""
+    print("testing Recommendation System...")
     
     try:
         js_path = os.path.join('static', 'app.js')
@@ -159,7 +159,7 @@ def test_recommendation_system():
         
         checks = [
             ('calculateMatchScore', 'Match scoring'),
-            ('userPreferences.genres', 'User preferences usage'),
+            ('userPreferences.genres', 'user preferences usage'),
             ('getRecommendedMovies', 'Recommendation logic'),
             ('renderMovies', 'Movie rendering'),
             ('moviesGrid.innerHTML', 'DOM updates')
@@ -180,8 +180,8 @@ def test_recommendation_system():
         return False
 
 def test_rating_system():
-    """Test movie rating functionality"""
-    print("Testing Rating System...")
+    """test movie rating functionality"""
+    print("testing Rating System...")
     
     try:
         js_path = os.path.join('static', 'app.js')
@@ -212,7 +212,7 @@ def test_rating_system():
 
 def main():
     """Run all tests"""
-    print("Starting Frontend Test Suite")
+    print("Starting Frontend test Suite")
     print("=" * 50)
     
     tests = [
@@ -233,11 +233,11 @@ def main():
                 passed += 1
             print()  # Empty line between test groups
         except Exception as e:
-            print(f"Test {test.__name__} crashed: {e}")
+            print(f"test {test.__name__} crashed: {e}")
             print()
     
     print("=" * 50)
-    print(f"Test Results: {passed}/{total} tests passed")
+    print(f"test Results: {passed}/{total} tests passed")
     
     if passed == total:
         print("All tests completed successfully")

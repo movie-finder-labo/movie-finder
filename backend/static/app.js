@@ -17,7 +17,7 @@ const userProfile = document.getElementById('userProfile');
 const userName = document.getElementById('userName');
 const userAvatar = document.getElementById('userAvatar');
 
-// User data
+// user data
 let currentUser = null;
 let userPreferences = {
     genres: [],
@@ -212,7 +212,7 @@ function getRecommendedMovies() {
         .sort((a, b) => b.matchScore - a.matchScore);
 }
 
-// Chat functionality
+// chat functionality
 function addMessage(message, isUser, movieData) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
@@ -527,7 +527,7 @@ searchInput.addEventListener('keypress', (e) => {
     }
 });
 
-// Chat event listeners
+// chat event listeners
 sendButton.addEventListener('click', sendMessage);
 userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {

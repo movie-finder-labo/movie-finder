@@ -18,18 +18,18 @@ def test_imports():
         from pymongo import MongoClient
         print("✓ pymongo imported successfully")
         
-        # Test if we can import your routes
+        # test if we can import your routes
         try:
             from Routes.User.UserRoutes import user_bp
-            print("✓ User routes imported successfully")
+            print("✓ user routes imported successfully")
         except ImportError as e:
-            print(f"✗ User routes import failed: {e}")
+            print(f"✗ user routes import failed: {e}")
             
         try:
             from Routes.Chat.chat_routes import chat_bp
-            print("✓ Chat routes imported successfully")
+            print("✓ chat routes imported successfully")
         except ImportError as e:
-            print(f"✗ Chat routes import failed: {e}")
+            print(f"✗ chat routes import failed: {e}")
             
         return True
         
@@ -38,7 +38,7 @@ def test_imports():
         return False
 
 if __name__ == "__main__":
-    print("Testing application setup...")
+    print("testing application setup...")
     if test_imports():
         print("\n🎉 All imports successful! Your app should work.")
     else:

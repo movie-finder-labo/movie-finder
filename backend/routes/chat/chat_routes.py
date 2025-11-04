@@ -1,6 +1,6 @@
 from flask import request, jsonify, Blueprint
-from backend.Services.openai_service import ask_openai
-from backend.database.csv import InitializeMovieData
+from backend.libs.services.openai_service import ask_openai
+from backend.libs.database.csv import InitializeMovieData
 
 chat_bp = Blueprint("chat", __name__)
 
