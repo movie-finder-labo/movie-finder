@@ -364,61 +364,88 @@ showProfileSetup.addEventListener('click', (e) => {
 // Save profile
 saveProfile.addEventListener('click', async () => {
     const fullName = document.getElementById('fullName').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('profilePassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
     const age = parseInt(document.getElementById('age').value);
 
     // Get selected genres
     const genreCheckboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]:checked');
     const genres = Array.from(genreCheckboxes).map(cb => cb.value);
 
-    if (fullName && age && genres.length > 0) {
-        try {
-            const response = await fetch('/user/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: fullName.toLowerCase().replace(/\s+/g, ''),
-                    password: 'default123',
-                    fullName,
-                    age,
-                    genres
-                })
+    // Validation
+    if (!fullName || !email || !password || !confirmPassword || !age || genres.length === 0) {
+        alert('Please complete all fields and select at least one genre');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+    }
+
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters long');
+        return;
+    }
+
+    try {
+        const response = await fetch('/user/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: email, // Using email as username
+                password: password,
+                fullName: fullName,
+                email: email,
+                age: age,
+                genres: genres
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Create user locally
+            currentUser = { 
+                username: email,
+                fullName: fullName,
+                email: email
+            };
+
+            userPreferences = { genres, age };
+
+            // Save to localStorage
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
+
+            // Update UI
+            updateUIForLoggedInUser();
+            profileModal.style.display = 'none';
+
+            // Reset form
+            document.getElementById('fullName').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('profilePassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('age').value = '';
+            document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
             });
 
-            const data = await response.json();
+            // Show personalized recommendations
+            renderMovies(getRecommendedMovies());
 
-            if (data.success) {
-                // Create user locally
-                currentUser = { 
-                    username: fullName.toLowerCase().replace(/\s+/g, ''),
-                    fullName: fullName
-                };
-
-                userPreferences = { genres, age };
-
-                // Save to localStorage
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
-
-                // Update UI
-                updateUIForLoggedInUser();
-                profileModal.style.display = 'none';
-
-                // Show personalized recommendations
-                renderMovies(getRecommendedMovies());
-
-                // Welcome message with OpenAI
-                addMessage(`Welcome, ${fullName}! I've learned your preferences for ${genres.join(', ')} movies. Ask me for personalized recommendations!`, false);
-            } else {
-                alert('Registration failed: ' + data.message);
-            }
-        } catch (error) {
-            console.error('Registration error:', error);
-            alert('Registration failed. Please try again.');
+            // Welcome message
+            addMessage(`Welcome, ${fullName}! I've learned your preferences for ${genres.join(', ')} movies. Ask me for personalized recommendations!`, false);
+        } else {
+            alert('Registration failed: ' + data.message);
         }
-    } else {
-        alert('Please complete all fields and select at least one genre');
+    } catch (error) {
+        console.error('Registration error:', error);
+        alert('Registration failed. Please try again.');
     }
 });
 
@@ -459,6 +486,7 @@ loginBtn.addEventListener('click', () => {
 profileBtn.addEventListener('click', () => {
     // Populate form with current data
     document.getElementById('fullName').value = currentUser.fullName || '';
+    document.getElementById('email').value = currentUser.email || '';
     document.getElementById('age').value = userPreferences.age || '';
 
     // Check genre boxes
