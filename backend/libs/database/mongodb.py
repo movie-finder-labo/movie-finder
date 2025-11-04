@@ -53,7 +53,7 @@ class MovieFinderDB(object):
         
         - A user by the given username already exists
         """
-        if await self.GetUserByUsername(username) is not None: raise Exception("User already exists")
+        if await self.GetUserByUsername(username) is not None: raise Exception("user already exists")
         createdDate = datetime.now(timezone.utc)
         result = await self.users.insert_one({"username": username, "pwh": pwh, "created": createdDate})
         return result.inserted_id

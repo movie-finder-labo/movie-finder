@@ -17,12 +17,10 @@ const userProfile = document.getElementById('userProfile');
 const userName = document.getElementById('userName');
 const userAvatar = document.getElementById('userAvatar');
 
-// User data
+// user data
 let currentUser = null;
 let userPreferences = {
     genres: [],
-    mood: '',
-    frequency: '',
     age: 0
 };
 
@@ -49,6 +47,103 @@ function updateUIForLoggedInUser() {
     userAvatar.textContent = (currentUser.fullName || currentUser.username).charAt(0).toUpperCase();
 }
 
+// Get user rating stars HTML
+function getUserRatingStars(movieId) {
+    const userRating = getUserRating(movieId);
+    let starsHtml = '<div class="rating-stars">';
+    
+    for (let i = 1; i <= 5; i++) {
+        const isActive = i <= userRating ? 'active' : '';
+        starsHtml += `<span class="star ${isActive}" data-rating="${i}">★</span>`;
+    }
+    
+    starsHtml += '</div>';
+    return starsHtml;
+}
+
+// Get user rating for a movie
+function getUserRating(movieId) {
+    if (!currentUser) return 0;
+    
+    const userRatings = JSON.parse(localStorage.getItem('userRatings')) || {};
+    const userSpecificRatings = userRatings[currentUser.username] || {};
+    return userSpecificRatings[movieId] || 0;
+}
+
+// Save user rating for a movie
+function saveUserRating(movieId, rating) {
+    if (!currentUser) return;
+    
+    let userRatings = JSON.parse(localStorage.getItem('userRatings')) || {};
+    if (!userRatings[currentUser.username]) {
+        userRatings[currentUser.username] = {};
+    }
+    
+    userRatings[currentUser.username][movieId] = rating;
+    localStorage.setItem('userRatings', JSON.stringify(userRatings));
+}
+
+// Add event listeners to rating stars
+function addRatingEventListeners() {
+    const stars = document.querySelectorAll('.star');
+    stars.forEach(star => {
+        star.addEventListener('click', handleStarClick);
+    });
+}
+
+// Handle star click event
+function handleStarClick(event) {
+    if (!currentUser) {
+        addMessage("Please log in to rate movies!", false);
+        return;
+    }
+    
+    const star = event.target;
+    const rating = parseInt(star.getAttribute('data-rating'));
+    const movieId = star.closest('.user-rating').getAttribute('data-movie-id');
+    
+    saveUserRating(movieId, rating);
+    
+    // Update the stars visually
+    const stars = star.parentElement.querySelectorAll('.star');
+    stars.forEach((s, index) => {
+        if (index < rating) {
+            s.classList.add('active');
+        } else {
+            s.classList.remove('active');
+        }
+    });
+    
+    // Optional: Send rating to backend
+    sendRatingToBackend(movieId, rating);
+}
+
+// Send rating to backend (optional)
+async function sendRatingToBackend(movieId, rating) {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch('/movie/rate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: currentUser.username,
+                movieId: movieId,
+                rating: rating
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            console.log('Rating saved to backend');
+        }
+    } catch (error) {
+        console.error('Failed to save rating to backend:', error);
+    }
+}
+
 // Render movies to the grid
 function renderMovies(movieList, showMatchScore = true) {
     moviesGrid.innerHTML = '';
@@ -72,29 +167,31 @@ function renderMovies(movieList, showMatchScore = true) {
                 <div class="movie-genres">
                     ${movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
                 </div>
+                <div class="user-rating" data-movie-id="${movie.id}">
+                    <div class="rating-label">Your Rating:</div>
+                    ${getUserRatingStars(movie.id)}
+                </div>
             </div>
         `;
         moviesGrid.appendChild(movieCard);
     });
+    
+    // Add event listeners for rating stars
+    addRatingEventListeners();
 }
 
 // Calculate match score for recommendations
 function calculateMatchScore(movie) {
     let score = 0;
 
-    // Genre match
+    // Genre match - more weight since we only have genres now
     const genreMatches = movie.genres.filter(genre =>
         userPreferences.genres.includes(genre)
     ).length;
-    score += (genreMatches / movie.genres.length) * 40;
-
-    // Mood match
-    if (movie.mood === userPreferences.mood) {
-        score += 30;
-    }
+    score += (genreMatches / movie.genres.length) * 70;
 
     // Age suitability
-    if (userPreferences.age >= movie.ageSuitability) {
+    if (userPreferences.age >= (movie.ageSuitability || 13)) {
         score += 30;
     }
 
@@ -115,7 +212,7 @@ function getRecommendedMovies() {
         .sort((a, b) => b.matchScore - a.matchScore);
 }
 
-// Chat functionality
+// chat functionality
 function addMessage(message, isUser, movieData) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
@@ -134,7 +231,7 @@ async function getAIResponse(userMessage) {
         // Add user context to the message if logged in
         let enhancedMessage = userMessage;
         if (currentUser) {
-            enhancedMessage = `User preferences: ${userPreferences.genres.join(', ')} genres, ${userPreferences.mood} mood, age ${userPreferences.age}. Question: ${userMessage}`;
+            enhancedMessage = `User preferences: ${userPreferences.genres.join(', ')} genres, age ${userPreferences.age}. Question: ${userMessage}`;
         }
 
         const response = await fetch('/chat/ask', {
@@ -213,29 +310,6 @@ async function sendMessage() {
     }
 }
 
-// Get structured recommendations based on user profile
-async function getStructuredRecommendations() {
-    if (!currentUser) return null;
-    
-    const preferences = `User likes ${userPreferences.genres.join(', ')} genres, prefers ${userPreferences.mood} movies, and is ${userPreferences.age} years old.`;
-    
-    try {
-        const response = await fetch('/chat/recommend', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ preferences: preferences })
-        });
-
-        const data = await response.json();
-        return data.success ? data.recommendations : null;
-    } catch (error) {
-        console.error('Structured recommendations error:', error);
-        return null;
-    }
-}
-
 // Login functionality with Flask backend
 submitLogin.addEventListener('click', async () => {
     const username = document.getElementById('username').value;
@@ -290,65 +364,88 @@ showProfileSetup.addEventListener('click', (e) => {
 // Save profile
 saveProfile.addEventListener('click', async () => {
     const fullName = document.getElementById('fullName').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('profilePassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
     const age = parseInt(document.getElementById('age').value);
-    const mood = document.getElementById('mood').value;
-    const frequency = document.getElementById('frequency').value;
 
     // Get selected genres
     const genreCheckboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]:checked');
     const genres = Array.from(genreCheckboxes).map(cb => cb.value);
 
-    if (fullName && age && genres.length > 0 && mood && frequency) {
-        try {
-            const response = await fetch('/user/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: fullName.toLowerCase().replace(/\s+/g, ''),
-                    password: 'default123',
-                    fullName,
-                    age,
-                    genres,
-                    mood,
-                    frequency
-                })
+    // Validation
+    if (!fullName || !email || !password || !confirmPassword || !age || genres.length === 0) {
+        alert('Please complete all fields and select at least one genre');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+    }
+
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters long');
+        return;
+    }
+
+    try {
+        const response = await fetch('/user/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: email, // Using email as username
+                password: password,
+                fullName: fullName,
+                email: email,
+                age: age,
+                genres: genres
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Create user locally
+            currentUser = { 
+                username: email,
+                fullName: fullName,
+                email: email
+            };
+
+            userPreferences = { genres, age };
+
+            // Save to localStorage
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
+
+            // Update UI
+            updateUIForLoggedInUser();
+            profileModal.style.display = 'none';
+
+            // Reset form
+            document.getElementById('fullName').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('profilePassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('age').value = '';
+            document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
             });
 
-            const data = await response.json();
+            // Show personalized recommendations
+            renderMovies(getRecommendedMovies());
 
-            if (data.success) {
-                // Create user locally
-                currentUser = { 
-                    username: fullName.toLowerCase().replace(/\s+/g, ''),
-                    fullName: fullName
-                };
-
-                userPreferences = { genres, mood, frequency, age };
-
-                // Save to localStorage
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
-
-                // Update UI
-                updateUIForLoggedInUser();
-                profileModal.style.display = 'none';
-
-                // Show personalized recommendations
-                renderMovies(getRecommendedMovies());
-
-                // Welcome message with OpenAI
-                addMessage(`Welcome, ${fullName}! I've learned your preferences for ${genres.join(', ')} movies with a ${mood} mood. Ask me for personalized recommendations!`, false);
-            } else {
-                alert('Registration failed: ' + data.message);
-            }
-        } catch (error) {
-            console.error('Registration error:', error);
-            alert('Registration failed. Please try again.');
+            // Welcome message
+            addMessage(`Welcome, ${fullName}! I've learned your preferences for ${genres.join(', ')} movies. Ask me for personalized recommendations!`, false);
+        } else {
+            alert('Registration failed: ' + data.message);
         }
-    } else {
-        alert('Please complete all fields in the profile');
+    } catch (error) {
+        console.error('Registration error:', error);
+        alert('Registration failed. Please try again.');
     }
 });
 
@@ -358,7 +455,7 @@ logoutBtn.addEventListener('click', () => {
     fetch('/user/logout')
         .then(() => {
             currentUser = null;
-            userPreferences = { genres: [], mood: '', frequency: '', age: 0 };
+            userPreferences = { genres: [], age: 0 };
 
             // Clear localStorage
             localStorage.removeItem('currentUser');
@@ -389,9 +486,8 @@ loginBtn.addEventListener('click', () => {
 profileBtn.addEventListener('click', () => {
     // Populate form with current data
     document.getElementById('fullName').value = currentUser.fullName || '';
+    document.getElementById('email').value = currentUser.email || '';
     document.getElementById('age').value = userPreferences.age || '';
-    document.getElementById('mood').value = userPreferences.mood || '';
-    document.getElementById('frequency').value = userPreferences.frequency || '';
 
     // Check genre boxes
     document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(cb => {
@@ -431,7 +527,7 @@ searchInput.addEventListener('keypress', (e) => {
     }
 });
 
-// Chat event listeners
+// chat event listeners
 sendButton.addEventListener('click', sendMessage);
 userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
@@ -442,7 +538,7 @@ userInput.addEventListener('keypress', (e) => {
 // Auto-generate recommendations when user logs in with preferences
 function generateAutoRecommendations() {
     if (currentUser && userPreferences.genres.length > 0) {
-        const autoMessage = `Suggest 3 specific movie recommendations based on my preferences for ${userPreferences.genres.join(', ')} genres and ${userPreferences.mood} mood.`;
+        const autoMessage = `Suggest 3 specific movie recommendations based on my preferences for ${userPreferences.genres.join(', ')} genres.`;
         setTimeout(() => {
             sendButton.disabled = true;
             addMessage("Let me suggest some movies based on your profile...", false);

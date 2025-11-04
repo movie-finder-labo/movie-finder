@@ -1,6 +1,6 @@
 from flask import request, jsonify, Blueprint
-from backend.Services.openai_service import ask_openai
-from backend.database.csv import InitializeMovieData
+from backend.libs.services.openai_service import ask_openai
+from backend.libs.database.csv import InitializeMovieData
 
 chat_bp = Blueprint("chat", __name__)
 
@@ -25,7 +25,7 @@ def ask():
         
         try:
             # Grab the last 13 elements and restore their original order (movie data is reversed by default)
-            data = list(InitializeMovieData().values())[-100:]
+            data = list(InitializeMovieData().values())[-13:]
             data.reverse()
         except IndexError:
             pass

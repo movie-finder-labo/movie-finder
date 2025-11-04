@@ -1,6 +1,6 @@
 import pytest
 
-from backend.database.mongodb import MovieFinderDB
+from backend.libs.database.mongodb import MovieFinderDB
 
 @pytest.fixture
 async def db():
@@ -18,7 +18,7 @@ async def test_CreateUser(db):
 async def test_add_same_user(db):
     await db.CreateUser("user123@email.com", "1234")
 
-    with pytest.raises(Exception, match="User already exists"):
+    with pytest.raises(Exception, match="user already exists"):
         await db.CreateUser("user123@email.com", "1234")
 
 async def test_DeleteUser(db):
