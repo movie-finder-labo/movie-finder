@@ -18,7 +18,7 @@ async def test_CreateUser(db):
     assert isinstance(user_id, ObjectId)
 
     user = await db.GetUserByEmail("user123@email.com")
-    assert user["email"] == "user123@email.com"
+    assert user["username"] == "user123@email.com"
     assert "pwh" in user
     assert bcrypt.checkpw("1234".encode("utf-8"), user["pwh"].encode("utf-8"))
     assert user["fullname"] == "User 123"
@@ -42,9 +42,9 @@ async def test_GetUserBy(db):
     await db.CreateUser("user123@email.com", "1234", "User 123", 25, ["Action"])
     user = await db.GetUserByEmail("user123@email.com")
 
-    user_by_email = await db.GetUserBy("email", "user123@email.com")
+    user_by_email = await db.GetUserBy("username", "user123@email.com")
 
-    assert user_by_email["email"] == user["email"]
+    assert user_by_email["username"] == user["username"]
 
 async def test_GetUsers(db):
     await db.CreateUser("user1@email.com", "1234", "User 1", 21, ["Action"])
@@ -67,7 +67,7 @@ async def test_Connect(db):
 async def test_GetUserById(db):
     user_id = await db.CreateUser("user456@email.com", "pw", "User 456", 30, ["Action"])
     user = await db.GetUserById(user_id)
-    assert user["email"] == "user456@email.com"
+    assert user["username"] == "user456@email.com"
 
 async def test_VerifyUserPassword(db):
     await db.CreateUser("user789@email.com", "my_password", "User 789", 25, ["Comedy"])
