@@ -49,8 +49,7 @@ async def login():
             "message": "Invalid credentials"
         }), 401
     
-    stored_hash = user["pwh"].encode("utf-8")
-    if MovieFinderDB.verify_password(stored_hash,password):
+    if MovieFinderDB.VerifyUserPassword(email,password):
         return jsonify({
             "success": True,
             "message": "Login successful"
