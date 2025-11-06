@@ -3,6 +3,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.asynchronous.collection import AsyncCollection
 from bson.objectid import ObjectId
 from datetime import datetime, timezone
+import bcrypt
 
 class MovieFinderDB(object):
     """ MongoDB based Database wrapper for MovieFinder """
@@ -38,11 +39,6 @@ class MovieFinderDB(object):
         return await self.GetUserBy("username", username)
 
     # TODO: Replace return type from `any` to user class
-    async def GetUserByPWH(self, pwh: str) -> any:
-        """ Tries to get a user by it's password hash """
-        return await self.GetUserBy("pwh", pwh)
-
-    # TODO: Replace return type from `any` to user class
     async def GetUserById(self, id: ObjectId) -> any:
         return await self.GetUserBy("_id", id)
 
@@ -56,13 +52,21 @@ class MovieFinderDB(object):
         if await self.GetUserByUsername(username) is not None: raise Exception("user already exists")
 
         createdDate = datetime.now(timezone.utc)
+        hashed_pw = MovieFinderDB.hash_password(pwh)
         result = await self.users.insert_one({"username": username,
-                                              "pwh": pwh,
+                                              "pwh": hashed_pw.decode("utf-8"),
                                               "fullname": fullName,
                                               "age" : age,
                                               "genres" : genres,
                                               "created": createdDate})
         return result.inserted_id
+    
+    async def VerifyUserPassword(self, username: str, candidate_password: str) -> bool:
+        user = await self.GetUserByUsername(username)
+        if not user:
+            return False
+        stored_hash = user["pwh"].encode("utf-8")
+        return MovieFinderDB.verify_password(stored_hash, candidate_password)
     
     async def DeleteUser(self, username: str) -> bool:
         """ Deletes a user by the given username. """
@@ -72,3 +76,13 @@ class MovieFinderDB(object):
     async def DeleteAllUsers(self):
         result = await self.users.drop()
         return result
+
+    @staticmethod
+    def hash_password(password: str):
+        salt = bcrypt.gensalt(rounds=12)
+        return bcrypt.hashpw(password.encode('utf-8'), salt)
+
+    @staticmethod
+    def verify_password(stored_hash: bytes, candidate: str):
+        return bcrypt.checkpw(candidate.encode('utf-8'), stored_hash)
+    

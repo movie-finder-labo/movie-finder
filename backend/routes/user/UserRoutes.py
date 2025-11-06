@@ -1,5 +1,6 @@
 from flask import request, jsonify, Blueprint
 from backend.libs.database.mongodb import MovieFinderDB
+import bcrypt
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
 
@@ -32,12 +33,24 @@ async def login():
     username = data.get('username')
     password = data.get('password')
 
+    if not username or not password:
+        return jsonify({
+            "success": False,
+            "message": "Username and password required"
+        }), 400
+    
     # DB connection
     db = MovieFinderDB("mongodb://localhost:27017", "MovieFinderDB")
 
     user = await db.users.GetUserByUsername(username)
-
-    if user and user['password'] == password:
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "Invalid credentials"
+        }), 401
+    
+    stored_hash = user["pwh"].encode("utf-8")
+    if MovieFinderDB.verify_password(stored_hash,password):
         return jsonify({
             "success": True,
             "message": "Login successful"
