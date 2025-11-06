@@ -346,7 +346,7 @@ submitLogin.addEventListener('click', async () => {
                 alert('Login failed: ' + data.message);
             }
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('Login failed:', error);
             alert('Login failed. Please try again.');
         }
     } else {
