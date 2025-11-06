@@ -49,7 +49,8 @@ async def login():
             "message": "Invalid credentials"
         }), 401
     
-    if MovieFinderDB.VerifyUserPassword(email,password):
+    mvf = MovieFinderDB
+    if mvf.VerifyUserPassword(email,password):
         return jsonify({
             "success": True,
             "message": "Login successful"
