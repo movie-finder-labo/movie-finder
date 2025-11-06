@@ -30,7 +30,7 @@ async def register():
 @user_bp.route("/login", methods=['POST'])
 async def login():
     data = request.get_json()
-    email = data.get('email')
+    email = data.get('username')
     password = data.get('password')
 
     if not email or not password:
@@ -40,16 +40,16 @@ async def login():
         }), 400
     
     # DB connection
-    db = MovieFinderDB("mongodb://localhost:27017", "MovieFinderDB")
+    db = MovieFinderDB("mongodb://localhost:27017", "MovieFinder")
 
-    user = await db.users.GetUserByEmail(email)
+    user = await db.GetUserByEmail(email)
     if not user:
         return jsonify({
             "success": False,
-            "message": "Invalid credentials"
+            "message": "Failed to find the user"
         }), 401
-    
-    if MovieFinderDB.VerifyUserPassword(email,password):
+
+    if await db.VerifyUserPassword(email, password):
         return jsonify({
             "success": True,
             "message": "Login successful"
