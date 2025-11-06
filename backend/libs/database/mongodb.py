@@ -36,7 +36,7 @@ class MovieFinderDB(object):
     # TODO: Replace return type from `any` to user class
     async def GetUserByEmail(self, email: str) -> any:
         """ Tries to get a user by it's email """
-        return await self.GetUserBy("username", email)
+        return await self.GetUserBy("email", email)
 
     # TODO: Replace return type from `any` to user class
     async def GetUserById(self, id: ObjectId) -> any:
