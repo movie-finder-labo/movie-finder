@@ -34,9 +34,9 @@ class MovieFinderDB(object):
         return await self.users.find_one({attr: needle})
     
     # TODO: Replace return type from `any` to user class
-    async def GetUserByUsername(self, username: str) -> any:
-        """ Tries to get a user by it's username """
-        return await self.GetUserBy("username", username)
+    async def GetUserByEmail(self, email: str) -> any:
+        """ Tries to get a user by it's email """
+        return await self.GetUserBy("email", email)
 
     # TODO: Replace return type from `any` to user class
     async def GetUserById(self, id: ObjectId) -> any:
@@ -44,16 +44,16 @@ class MovieFinderDB(object):
 
     # TODO: Maybe integrate the password hashing algorithim with this function
     # TODO: Replace return type from `any` to user class
-    async def CreateUser(self, username: str, pwh: str, fullName: str, age : int, genres : list) -> ObjectId:
-        """ Creates and inserts a new user into the users collection. Make sure to wrap in a `try` clause, as this function can raise exceptions if:
-        
-        - A user by the given username already exists
+    async def CreateUser(self, email: str, pwh: str, fullName: str, age : int, genres : list) -> ObjectId:
+        """ 
+        Creates and inserts a new user into the users collection. Make sure to wrap in a `try` clause, as this function can raise exceptions if:
+        - A user by the given email already exists
         """
-        if await self.GetUserByUsername(username) is not None: raise Exception("user already exists")
+        if await self.GetUserByEmail(email) is not None: raise Exception("user already exists")
 
         createdDate = datetime.now(timezone.utc)
         hashed_pw = MovieFinderDB.hash_password(pwh)
-        result = await self.users.insert_one({"username": username,
+        result = await self.users.insert_one({"email": email,
                                               "pwh": hashed_pw.decode("utf-8"),
                                               "fullname": fullName,
                                               "age" : age,
@@ -61,16 +61,16 @@ class MovieFinderDB(object):
                                               "created": createdDate})
         return result.inserted_id
     
-    async def VerifyUserPassword(self, username: str, candidate_password: str) -> bool:
-        user = await self.GetUserByUsername(username)
+    async def VerifyUserPassword(self, email: str, candidate_password: str) -> bool:
+        user = await self.GetUserByEmail(email)
         if not user:
             return False
         stored_hash = user["pwh"].encode("utf-8")
         return MovieFinderDB.verify_password(stored_hash, candidate_password)
     
-    async def DeleteUser(self, username: str) -> bool:
-        """ Deletes a user by the given username. """
-        result = await self.users.delete_one({"username": username})
+    async def DeleteUser(self, email: str) -> bool:
+        """ Deletes a user by the given email. """
+        result = await self.users.delete_one({"email": email})
         return bool(result.deleted_count)
 
     async def DeleteAllUsers(self):

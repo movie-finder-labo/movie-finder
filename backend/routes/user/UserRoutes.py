@@ -1,5 +1,5 @@
 from flask import request, jsonify, Blueprint
-from backend.libs.database.mongodb import MovieFinderDB
+from libs.database.mongodb import MovieFinderDB
 import bcrypt
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
@@ -8,7 +8,7 @@ user_bp = Blueprint("user", __name__, url_prefix="/user")
 async def register():
     data = request.get_json()
 
-    username = data.get('username')
+    email = data.get('email')
     password = data.get('password')
     fullName = data.get('fullName')
     age = data.get('age')
@@ -17,10 +17,10 @@ async def register():
     # DB connection
     db = MovieFinderDB("mongodb://localhost:27017", "MovieFinder")
 
-    if not username or not password:
-        return jsonify({'success': False, 'error': 'Username and password are required'}), 400
+    if not email or not password:
+        return jsonify({'success': False, 'error': 'email and password are required'}), 400
 
-    await db.CreateUser(username, password, fullName, age, genres)
+    await db.CreateUser(email, password, fullName, age, genres)
 
     return jsonify({
         "success": True,
@@ -30,19 +30,19 @@ async def register():
 @user_bp.route("/login", methods=['POST'])
 async def login():
     data = request.get_json()
-    username = data.get('username')
+    email = data.get('email')
     password = data.get('password')
 
-    if not username or not password:
+    if not email or not password:
         return jsonify({
             "success": False,
-            "message": "Username and password required"
+            "message": "email and password required"
         }), 400
     
     # DB connection
     db = MovieFinderDB("mongodb://localhost:27017", "MovieFinderDB")
 
-    user = await db.users.GetUserByUsername(username)
+    user = await db.users.GetUserByEmail(email)
     if not user:
         return jsonify({
             "success": False,
