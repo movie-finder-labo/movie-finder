@@ -1,16 +1,14 @@
-import csv
 from os import listdir
 from os.path import isfile
 import re
 
 # Relative datafile path to ../movie-finder/backend/
-dataFilePath = "data/"
+dataFilePath = "data\\"
 dataFileExtension = ".csv"
 MovieData = {}
 CSVData = {}
 
 def formatCSVData(data: dict):
-    print(data)
     cache = {} # Dgaf about space complexity. Assume at least one or more related rows per movieId in the other files.
     def Lookup(key: str, id):
         d = data[key]
@@ -24,7 +22,7 @@ def formatCSVData(data: dict):
                 xId = x and x["movieId"] or None
                 
                 if x and xId == id:
-                    if (xId == "193567"): print(x)
+                    c[xId] = x
                     return x
                 elif x is not None:
                     c[xId] = x
@@ -53,7 +51,6 @@ def formatCSVData(data: dict):
             "mood": moodLookup and moodLookup["tag"] or "N/A",
             "ageSuitability": "N/A" # ??
         }
-        if (id =="193567"):print(fm)
         return fm
     
     fms = {}
@@ -73,9 +70,9 @@ def InitializeMovieData() -> dict:
         return MovieData
     except IndexError:
         try:
-            for fp in GetDataFiles(): # e.g data/movies.csv, data/ratings.csv
+            for fp in GetDataFiles(): # e.g ../data/movies.csv, ../data/ratings.csv
                 data = DeserializeCSV(fp)
-                if fp != dataFilePath + "movies": data.reverse() # All the files are ordered by movieId, we need to reverse to setup performance boost for the formatCSVData function. The movie file doesn't matter.
+                if fp != dataFilePath + "movies": data.reverse() # All the files are ordered by movieId, we need to reverse to setup performance boost for the formatCSVData function. The movies file doesn't matter.
                 CSVData[fp.removeprefix(dataFilePath).removesuffix(dataFileExtension)] = data
             MovieData = formatCSVData(CSVData)
         except Exception as e:
@@ -89,7 +86,7 @@ def IsCSV(path: str) -> bool:
     return path.endswith(dataFileExtension)
 
 def GetDataFiles() -> list[str]:
-    """ Finds the relative path to the ../movie-finder/backend folder of all the .csv data files in ../movie-finder/backend/data """
+    """ Finds the relative paths of all the .csv data files in ../movie-finder/backend/data """
     fps = []
     for p in listdir(dataFilePath):
         fp = dataFilePath + p
@@ -97,20 +94,22 @@ def GetDataFiles() -> list[str]:
             fps.append(fp)
     return fps
 
-def DefaultDeserializer(row: list[str], cols: list[str]) -> dict:
-    """ The default csv deserializer for the DeserializeCSV function. Maps the value for the corresponding column onto a new object. """
+def DefaultDeserializer(row: str, cols: list[str]) -> dict:
+    """ The default csv deserializer for the DeserializeCSV function. Maps the values of a row for the corresponding columns onto a new object. """
+    match = re.split(r",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", row)
+    # Assign the values to their respective columns
     obj = {}
     for i, col in enumerate(cols):
-        obj[col] = row[i]
+        obj[col] = "".join(match[i].split("\""))
     return obj
 
 def DeserializeCSV(path: str, deserializer=None) -> list[dict]:
-    """ Reads a given csv file and uses the given deserializer function to map values into keys for a new object """
+    """ Reads a given csv file and uses the given deserializer (or the default serializer if none) function to map values into keys into a list of new rows of dicts """
     if not IsCSV(path): raise Exception("Must be a CSV file (.csv)")
     data: list[dict] = []
     with open(file=path, encoding="mac_roman", newline='') as csvFile:
-        reader = csv.reader(csvFile, quotechar ='|')
-        cols = next(reader) # Grab column names on the first line of the CSV file
-        for row in reader:
+        # Grab column names on the first line of the CSV file
+        cols = csvFile.readline().strip().split(",")
+        for row in csvFile:
             data.append((deserializer if deserializer is not None else DefaultDeserializer)(row, cols))
     return data
