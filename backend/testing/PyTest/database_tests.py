@@ -19,7 +19,7 @@ async def db():
 
 async def test_singleton(db):
     db2 = MovieFinderDB(host, dbName)
-    assert db == db2
+    assert db2 is db
 
 async def test_CreateUser(db):
     await db.CreateUser("user123@email.com", "1234")
