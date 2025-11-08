@@ -1,12 +1,25 @@
 import pytest
+# Import parent directory so we can access libs package
+import sys
+from pathlib import Path
 
-from backend.libs.database.mongodb import MovieFinderDB
+libdir = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(libdir))
+
+from libs.database.mongodb import MovieFinderDB
+
+host = "localhost:27017"
+dbName =  "Test_MovieFinder"
 
 @pytest.fixture
 async def db():
-    database = MovieFinderDB("localhost:27017", "Test_MovieFinder")
+    database = MovieFinderDB(host, dbName)
     await database.DeleteAllUsers()
     yield database
+
+async def test_singleton(db):
+    db2 = MovieFinderDB(host, dbName)
+    assert db == db2
 
 async def test_CreateUser(db):
     await db.CreateUser("user123@email.com", "1234")

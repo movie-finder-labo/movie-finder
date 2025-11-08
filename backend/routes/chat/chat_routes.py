@@ -4,7 +4,7 @@ from libs.database.csv import InitializeMovieData
 
 chat_bp = Blueprint("chat", __name__)
 
-def error(err: str, c: int = 500):
+def error(err="A serverside error has occured", c: int = 500):
     return jsonify({
             "success": False,
             "error": str(err)
@@ -31,7 +31,7 @@ def ask():
             pass
         except Exception as e:
             print(f"Failed to initialize movie data: {e}")
-            return error("A serverside error has occured")
+            return error()
         
         return jsonify({
             "success": True,
@@ -39,4 +39,4 @@ def ask():
         }), 200
     except Exception as e:
         print(f"Failed to retrieve response: {e}")
-        return error("A serverside error has occured")
+        return error()

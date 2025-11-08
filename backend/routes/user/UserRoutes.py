@@ -1,13 +1,10 @@
 from flask import request, jsonify, Blueprint
+from libs.database.mongodb import MovieFinderDB, User, PWHash, DuplicateUsername
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
 
-# Simple in-memory storage for demo
-users_db = {}
-
-
 @user_bp.route("/register", methods=['POST'])
-def register():
+async def register():
     data = request.get_json()
 
     username = data.get('username')
@@ -15,20 +12,21 @@ def register():
     fullName = data.get('fullName')
     age = data.get('age')
     genres = data.get('genres')
+    db = MovieFinderDB()
 
     if not username or not password:
         return jsonify({'success': False, 'error': 'Username and password are required'}), 400
 
-    if username in users_db:
+    try:
+        user = await db.CreateUser(username, password, age, genres)
+    except DuplicateUsername:
+        print(f"Failed to register user: User already exists.")
         return jsonify({'success': False, 'error': 'User already exists'}), 400
+    except Exception as e:
+        print(f"Failed to register user: {e}.")
+        return jsonify({'success': False, 'error': "An unknown serverside error has occured"}), 400
 
-    # Store user in memory
-    users_db[username] = {
-        'password': password,
-        'fullName': fullName,
-        'age': age,
-        'genres': genres
-    }
+    print(f"User created: {user}")
 
     return jsonify({
         "success": True,
@@ -37,17 +35,24 @@ def register():
 
 
 @user_bp.route("/login", methods=['POST'])
-def login():
+async def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    db = MovieFinderDB()
 
-    user = users_db.get(username)
+    user = await db.GetUserByUsername(username)
 
-    if user and user['password'] == password:
+    if user and user.pwh == PWHash(str(password).encode(), user.salt):
         return jsonify({
             "success": True,
-            "message": "Login successful"
+            "message": "Login successful",
+            "response": {
+                "username": user.username,
+                "age": user.age,
+                "genres": user.genres,
+                "created": user.created,
+            }
         })
     else:
         return jsonify({
