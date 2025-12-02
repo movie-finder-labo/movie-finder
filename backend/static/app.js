@@ -123,13 +123,13 @@ async function sendRatingToBackend(movieId, rating) {
     if (!currentUser) return;
     
     try {
-        const response = await fetch('/movie/rate', {
+        const response = await fetch('/user/ratemovie', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                username: currentUser.username,
+                jwt: currentUser.jwt,
                 movieId: movieId,
                 rating: rating
             })
@@ -138,6 +138,9 @@ async function sendRatingToBackend(movieId, rating) {
         const data = await response.json();
         if (data.success) {
             console.log('Rating saved to backend');
+        }
+        else {
+            console.log('Failed to save rating to backend:', data.error)
         }
     } catch (error) {
         console.error('Failed to save rating to backend:', error);
@@ -239,11 +242,10 @@ async function getAIResponse(userMessage) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ message: enhancedMessage })
+            body: JSON.stringify({ message: enhancedMessage, jwt: currentUser.jwt || null})
         });
 
         const data = await response.json();
-        console.log(data)
         
         if (data.success) {
             return data.response;
@@ -329,7 +331,7 @@ submitLogin.addEventListener('click', async () => {
 
             if (data.success) {
                 // For demo, we'll still use localStorage
-                currentUser = { username, fullName: username };
+                currentUser = { username, fullName: username, jwt: data.response.jwt };
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
                 loginModal.style.display = 'none';
@@ -412,7 +414,8 @@ saveProfile.addEventListener('click', async () => {
             currentUser = { 
                 username: email,
                 fullName: fullName,
-                email: email
+                email: email,
+                jwt: data.response.jwt
             };
 
             userPreferences = { genres, age };

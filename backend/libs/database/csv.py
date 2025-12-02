@@ -2,11 +2,13 @@ from os import listdir
 from os.path import isfile
 import re
 
-# Relative datafile path to ../movie-finder/backend/
 dataFilePath = "data\\"
+""" Relative datafile path to ../movie-finder/backend/ """
 dataFileExtension = ".csv"
 MovieData = {}
+""" Loaded formatted set of movie data based off of `CSVData`. Uses `movieId` as an index """
 CSVData = {}
+""" Loaded raw CSV data indexed by related file name (e.g `links`, `movies`, etc...) """
 
 def formatCSVData(data: dict):
     cache = {} # Dgaf about space complexity. Assume at least one or more related rows per movieId in the other files.
@@ -58,7 +60,7 @@ def formatCSVData(data: dict):
         fms[movie["movieId"]] = formatMovie(movie)
     return fms
 
-def InitializeMovieData() -> dict:
+def InitializeMovieData(path: str | None=None) -> dict:
     """ Finds and loads all .cvs files located in ../movie-finder/data/* and initialises movie data objects and stores them in the global variable 'MovieData'. Repeated calls to this function just returns the already loaded cache."""
     global MovieData
     global CSVData
@@ -70,7 +72,7 @@ def InitializeMovieData() -> dict:
         return MovieData
     except IndexError:
         try:
-            for fp in GetDataFiles(): # e.g ../data/movies.csv, ../data/ratings.csv
+            for fp in GetDataFiles(path): # e.g ../data/movies.csv, ../data/ratings.csv
                 data = DeserializeCSV(fp)
                 if fp != dataFilePath + "movies": data.reverse() # All the files are ordered by movieId, we need to reverse to setup performance boost for the formatCSVData function. The movies file doesn't matter.
                 CSVData[fp.removeprefix(dataFilePath).removesuffix(dataFileExtension)] = data
@@ -85,11 +87,12 @@ def IsCSV(path: str) -> bool:
     """ Checks if the file extension of a file matches with .csv """
     return path.endswith(dataFileExtension)
 
-def GetDataFiles() -> list[str]:
+def GetDataFiles(path: str | None=None) -> list[str]:
+    path = path or dataFilePath
     """ Finds the relative paths of all the .csv data files in ../movie-finder/backend/data """
     fps = []
-    for p in listdir(dataFilePath):
-        fp = dataFilePath + p
+    for p in listdir(path):
+        fp = path + p
         if isfile(fp) and IsCSV(fp):
             fps.append(fp)
     return fps
