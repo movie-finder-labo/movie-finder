@@ -1,5 +1,6 @@
 from flask import Flask, render_template
 from dotenv import load_dotenv
+from os import getenv
 
 app = Flask(__name__)
 
@@ -16,4 +17,5 @@ def index():
 
 if __name__ == "__main__":
     load_dotenv()
-    app.run(debug=True, port=5000)
+    app.config['secrect_key'] = getenv("FLASK_SECRET_KEY")
+    app.run(threaded=True, debug=True, port=5000)

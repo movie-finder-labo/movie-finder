@@ -9,7 +9,6 @@ load_dotenv(ROOT / "..env")
 def get_openai_client():
     """Get OpenAI client - initialize only when needed"""
     from openai import OpenAI
-    from openai import AuthenticationError, RateLimitError, BadRequestError
     
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:

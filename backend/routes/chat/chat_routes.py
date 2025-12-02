@@ -1,6 +1,8 @@
 from flask import request, jsonify, Blueprint
 from libs.services.openai_service import ask_openai
 from libs.database.csv import InitializeMovieData
+from libs.database.mongodb import MovieFinderDB
+from libs.authentication import TokenRequired, DecodeToken
 
 chat_bp = Blueprint("chat", __name__)
 
@@ -11,6 +13,7 @@ def error(err="A serverside error has occured", c: int = 500):
         }), c
 
 @chat_bp.route('/ask', methods=['POST'])
+@TokenRequired
 def ask():
     """Handle chat messages with OpenAI"""
     try:
@@ -18,10 +21,19 @@ def ask():
         if not data or 'message' not in data:
             return error("No message provided", 400)
         
-        user_message = data['message']
+        userMessage = data['message']
+        token = DecodeToken(data.get('jwt'))
+        db = MovieFinderDB()
+        user = db.GetUserByUsername(token.get("username"))
+        if not user:
+            print("Failed to generate chat response: Failed to find user.")
+            return error()
+        
+        userDataQuery = user.Querify()
+        question = f"The user has written a message to you. Take the following preferences into consideration when answering: ({userDataQuery}). Avoid mentioning the preferences unless prompted, but give your suggestions. The user's message is the following: \"{userMessage}\""
         
         # Get response from OpenAI
-        ai_response = ask_openai(user_message)
+        ai_response = ask_openai(question)
         
         try:
             # Grab the last 13 elements and restore their original order (movie data is reversed by default)

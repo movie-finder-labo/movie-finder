@@ -1,8 +1,9 @@
-from pymongo import AsyncMongoClient
-from pymongo.asynchronous.database import AsyncDatabase
-from pymongo.asynchronous.collection import AsyncCollection
+from pymongo import MongoClient
+from pymongo.database import Database
+from pymongo.collection import Collection
 from bson.objectid import ObjectId
 from datetime import datetime, timezone
+from .csv import InitializeMovieData
 from os import getenv
 import threading
 import bcrypt
@@ -14,7 +15,7 @@ def PWHash(pw: bytes, s: bytes) -> bytes:
 
 class User(object):
     """ User wrapper object """
-    def __init__(self, id: ObjectId, pwh: bytes, salt: bytes, username: str, age: int, genres: list[str], created: datetime):
+    def __init__(self, id: ObjectId, pwh: bytes, salt: bytes, username: str, age: int, genres: list[tuple[str, int]], ratings: list[str], created: datetime):
         if not ObjectId.is_valid(id): raise ValueError("BAD ID")
         self.id: ObjectId = id
         self.pwh: bytes = pwh
@@ -22,13 +23,48 @@ class User(object):
         self.username: str = username
         self.age: int = age
         self.genres: list[str] = genres
+        self.ratings: list[tuple[str, int]] = ratings
         self.created: datetime = created
     
     @staticmethod
     def fromDict(dict: dict | None):
-        if dict is None: return None
         """ Creates a user object from a dictionary. All the arguments for __init__ is expected to exists as keys by the same names in the dictionary."""
-        return User(dict.get("_id", None), dict.get("pwh", None), dict.get("salt", None), dict.get("username", "bad_username"), dict.get("age", -1), dict.get("genres", []), dict.get("created", datetime.now(timezone.utc)))
+        if dict is None: return None
+        return User(dict.get("_id", None), dict.get("pwh", None), dict.get("salt", None), dict.get("username", "bad_username"), dict.get("age", -1), dict.get("genres", []), dict.get("ratings", []), dict.get("created", datetime.now(timezone.utc)))
+    
+    def RateMovie(self, movieId, rating: int):
+        rating = max(0, min(rating, 5))
+        movie = InitializeMovieData().get(movieId)
+        if not movie: raise LookupError("Movie not found")
+        db = MovieFinderDB()
+        try:
+            db.UpdateUserMovieRating(self.username, movieId, rating)
+        except Exception as err:
+            print(f"Failed to rate movie ({self.username}): {err}")
+            return
+        self.ratings[movieId] = rating
+    
+    def ForFrontend(self) -> dict[str, any]:
+        """Returns a `dict` that only comprises of the `username`, `age`, `genres` and `created` keys for frontend display. """
+        return {
+            "username": self.username,
+            "age": self.age,
+            "genres": self.genres,
+            "raints": self.ratings,
+            "created": self.created,
+        }
+        
+    def Querify(self) -> str:
+        """ Produces a query string usable for an AI prompt. Takes `ratings`, `genres` and `age` into account """
+        return f"This user has the following prefences for: {self.QuerifyGenres()}, {self.QuerifyRatings()} and the user's age which is {self.age or "N/A"}. Ignore anything that is \"N/A\""
+        
+    def QuerifyGenres(self) -> str:
+        """ Formats all genres into an AI prompt query """
+        return "the following genres, if any: \"" + ",".join(self.genres) + "\""
+
+    def QuerifyRatings(self) -> str:
+        """ Formats all ratings into an AI prompt query """
+        return "the following movie ratings (<title> <rating>), if any: \"" + ",".join(self.ratings) + "\""
     
     def __str__(self):
         return f"User \"{self.username}\" [{str(self.id)}]"
@@ -36,19 +72,19 @@ class User(object):
     def __repr__(self):
         self.__str__()
 
-class DuplicateUsername(Exception):
+class DuplicateUsernameError(Exception):
     pass
 
 class MovieFinderDB(object):
-    """ A thread-safe singleton class wrapping a single `AsyncMongoClient` instance. Call constructor to get an existing instance or initialize it if it doesn't yet exist. Currently supports the following collections:
+    """ A thread-safe singleton class wrapping a single `MongoClient` instance. Call constructor to get an existing instance or initialize it if it doesn't yet exist. Currently supports the following collections:
     
     - `Users`
     """
     _instance = None
     _lock = threading.Lock()
-    client: AsyncMongoClient = None
-    db: AsyncDatabase = None
-    users: AsyncCollection = None
+    client: MongoClient = None
+    db: Database = None
+    users: Collection = None
     
     # Create a new static instance or just return the already existing one
     def __new__(self, uri: str | None=None, databaseName: str | None=None):
@@ -62,7 +98,7 @@ class MovieFinderDB(object):
             self._instance = super(MovieFinderDB, self).__new__(self)
             if not uri: uri = getenv("MONGO_URI")
             if not databaseName: databaseName = getenv("MONGO_DATABASE")
-            self._instance.client = AsyncMongoClient(host=uri)
+            self._instance.client = MongoClient(host=uri)
             self._instance.db = self._instance.client[databaseName]
             self._instance.users = self._instance.db["users"]
             return self._instance
@@ -70,46 +106,49 @@ class MovieFinderDB(object):
     def __str__(self):
         return f"MovieFinderDB [{self.db.name}]"
    
-    async def Connect(self) -> None:
+    def Connect(self) -> None:
         """ Try the connection to the mongodb database. Not necessary, but can be used for initial error handling. """
-        await self.client.aconnect()
+        self.client.aconnect()
 
-    async def GetUsers(self) -> dict[ObjectId, User]:
+    def GetUsers(self) -> dict[ObjectId, User]:
         """ Gets all the documents from the `users` collection and reads them into a dictionary """
         users = dict()
-        async with self.users.find() as cursor:
-            async for user in cursor:
+        with self.users.find() as cursor:
+            for user in cursor:
                 users[ObjectId(user.get("_id"))] = User.fromDict(user)
         return users
     
-    async def GetUserBy(self, attr: str, needle: any) -> User | None:
+    def GetUserBy(self, attr: str, needle: any) -> User | None:
         """ Get user by a given attribute and a corresponding needle """
-        return User.fromDict(await self.users.find_one({attr: needle}))
+        return User.fromDict(self.users.find_one({attr: needle}))
     
-    async def GetUserByUsername(self, username: str) -> User | None:
+    def GetUserByUsername(self, username: str) -> User | None:
         """ Tries to get a user by it's username """
-        return await self.GetUserBy("username", username)
+        return self.GetUserBy("username", username)
 
-    async def GetUserById(self, id: ObjectId) -> User | None:
-        return await self.GetUserBy("_id", id)
+    def GetUserById(self, id: ObjectId) -> User | None:
+        return self.GetUserBy("_id", id)
 
-    async def CreateUser(self, username: str, password: str, age: int, genres: list[str]) -> User:
+    def UpdateUserMovieRating(self, username: str, movieId: str, rating: int) -> None:
+        self.users.update_one({"username": username, "username.ratings": {"$elemMatch", {"movieId": movieId}}}, {"$set": {"ratings.$.rating": rating}})
+
+    def CreateUser(self, username: str, password: str, age: int, genres: list[str]) -> User:
         """ Creates and inserts a new user into the users collection. Make sure to wrap in a `try` clause, as this function can raise exceptions if:
         
         - A user by the given username already exists
         """
-        if await self.GetUserByUsername(username) is not None: raise DuplicateUsername("user already exists")
+        if self.GetUserByUsername(username) is not None: raise DuplicateUsernameError("user already exists")
         createdDate = datetime.now(timezone.utc)
         salt = bcrypt.gensalt()
         pwh = PWHash(password.encode(), salt)
-        result = await self.users.insert_one({"username": username, "pwh": pwh, "salt": salt, "created": createdDate, "age": age, "genres": genres})
-        return await self.GetUserById(result.inserted_id)
+        result = self.users.insert_one({"username": username, "pwh": pwh, "salt": salt, "created": createdDate, "age": age, "genres": genres})
+        return self.GetUserById(result.inserted_id)
     
-    async def DeleteUser(self, username: str) -> bool:
+    def DeleteUser(self, username: str) -> bool:
         """ Deletes a user by the given username. """
-        result = await self.users.delete_one({"username": username})
+        result = self.users.delete_one({"username": username})
         return bool(result.deleted_count)
 
-    async def DeleteAllUsers(self):
-        result = await self.users.drop()
+    def DeleteAllUsers(self):
+        result = self.users.drop()
         return result
