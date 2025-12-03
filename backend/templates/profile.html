@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - MoviesNemt AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                <div>
+                    <h1>MoviesNemt AI</h1>
+                    <p class="subtitle">Your personalized movie discovery platform</p>
+                </div>
+            </div>
+            <div class="user-actions">
+                <div class="user-profile" id="userProfile">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-name" id="userName">User</div>
+                </div>
+                <a href="/" class="btn btn-secondary" style="text-decoration: none;">Home</a>
+                <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h2>My Profile</h2>
+                    <p>Manage your account and preferences</p>
+                </div>
+                
+                <div class="profile-sections">
+                    <!-- Personal Information Section -->
+                    <div class="profile-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-user"></i> Personal Information</h3>
+                            <a href="/" class="btn btn-secondary btn-small">Edit</a>
+                        </div>
+                        <div class="section-content">
+                            <div class="info-item">
+                                <span class="info-label">Full Name:</span>
+                                <span class="info-value" id="profileFullName">Loading...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Email:</span>
+                                <span class="info-value" id="profileEmail">Loading...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Age:</span>
+                                <span class="info-value" id="profileAge">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Actions Section -->
+                    <div class="profile-section danger-zone">
+                        <div class="section-header">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Account Actions</h3>
+                        </div>
+                        <div class="section-content">
+                            <p class="warning-text">These actions are permanent and cannot be undone.</p>
+                            <div class="action-buttons">
+                                <button class="btn btn-danger" id="deleteAccountBtn">
+                                    <i class="fas fa-trash"></i> Delete Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>MoviesNemt AI &copy; 2023 - Your personal movie recommendation assistant</p>
+        </footer>
+    </div>
+
+    <!-- Delete Account Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Delete Account</h2>
+                <p>This action cannot be undone</p>
+            </div>
+            <div class="form-group">
+                <p>Are you sure you want to delete your account? All your data, including preferences and ratings, will be permanently removed.</p>
+                <div class="form-group">
+                    <label for="confirmDelete">Type "DELETE" to confirm:</label>
+                    <input type="text" id="confirmDelete" placeholder="Type DELETE here">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn" disabled>Delete Account</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='profile.js') }}"></script>
+</body>
+</html>

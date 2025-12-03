@@ -6,8 +6,7 @@ const moviesGrid = document.getElementById('moviesGrid');
 const searchInput = document.getElementById('searchInput');
 const searchButton = document.getElementById('searchButton');
 const loginBtn = document.getElementById('loginBtn');
-const profileBtn = document.getElementById('profileBtn');
-const logoutBtn = document.getElementById('logoutBtn');
+const logoutBtn = document.getElementById('logoutBtn'); 
 const loginModal = document.getElementById('loginModal');
 const profileModal = document.getElementById('profileModal');
 const submitLogin = document.getElementById('submitLogin');
@@ -16,6 +15,7 @@ const saveProfile = document.getElementById('saveProfile');
 const userProfile = document.getElementById('userProfile');
 const userName = document.getElementById('userName');
 const userAvatar = document.getElementById('userAvatar');
+const profilePageBtn = document.getElementById('profilePageBtn'); 
 
 // user data
 let currentUser = null;
@@ -40,7 +40,8 @@ function checkLoginStatus() {
 // Update UI when user logs in
 function updateUIForLoggedInUser() {
     loginBtn.style.display = 'none';
-    profileBtn.style.display = 'block';
+    // REMOVE THIS LINE: profileBtn.style.display = 'block';
+    profilePageBtn.style.display = 'block';
     logoutBtn.style.display = 'block';
     userProfile.style.display = 'flex';
     userName.textContent = currentUser.fullName || currentUser.username;
@@ -268,20 +269,20 @@ function getBasicAIResponse(userMessage) {
     if (currentUser) {
         if (lowerMessage.includes('recommend') || lowerMessage.includes('suggest')) {
             const topMovies = getRecommendedMovies().slice(0, 3);
-            return `Based on your profile, I recommend: "${topMovies[0].title}", "${topMovies[1].title}", and "${topMovies[2].title}".`;
+            return {ai_response: `Based on your profile, I recommend: "${topMovies[0].title}", "${topMovies[1].title}", and "${topMovies[2].title}".`};
         }
     }
 
     if (lowerMessage.includes('action')) {
-        return "For action movies, check out 'The Dark Knight' or 'Inception'.";
+        return {ai_response: "For action movies, check out 'The Dark Knight' or 'Inception'."};
     } else if (lowerMessage.includes('drama')) {
-        return "For drama, I recommend 'The Shawshank Redemption'.";
+        return {ai_response: "For drama, I recommend 'The Shawshank Redemption'."};
     } else if (lowerMessage.includes('comedy')) {
-        return "For comedy films, you might enjoy light-hearted movies with humorous plots.";
+        return {ai_response: "For comedy films, you might enjoy light-hearted movies with humorous plots."};
     } else if (lowerMessage.includes('sci-fi') || lowerMessage.includes('science fiction')) {
-        return "For science fiction, I recommend 'Inception' or 'The Matrix'.";
+        return {ai_response: "For science fiction, I recommend 'Inception' or 'The Matrix'."};
     } else {
-        return "I can help you find great movies. Tell me what genres you like or what mood you're in!";
+        return {ai_response: "I can help you find great movies. Tell me what genres you like or what mood you're in!"};
     }
 }
 
@@ -363,7 +364,7 @@ showProfileSetup.addEventListener('click', (e) => {
     profileModal.style.display = 'flex';
 });
 
-// Save profile
+// Save profile - update this section
 saveProfile.addEventListener('click', async () => {
     const fullName = document.getElementById('fullName').value;
     const email = document.getElementById('email').value;
@@ -400,8 +401,6 @@ saveProfile.addEventListener('click', async () => {
             body: JSON.stringify({
                 username: email, // Using email as username
                 password: password,
-                fullName: fullName,
-                email: email,
                 age: age,
                 genres: genres
             })
@@ -415,7 +414,7 @@ saveProfile.addEventListener('click', async () => {
                 username: email,
                 fullName: fullName,
                 email: email,
-                jwt: data.response.jwt
+                jwt: data.response.jwt  // Add JWT token
             };
 
             userPreferences = { genres, age };
@@ -425,7 +424,7 @@ saveProfile.addEventListener('click', async () => {
             localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
 
             // Update UI
-            updateUIForLoggedInUser();
+            updateUIForLoggedInUser(); // This will show My Profile button
             profileModal.style.display = 'none';
 
             // Reset form
@@ -444,7 +443,7 @@ saveProfile.addEventListener('click', async () => {
             // Welcome message
             addMessage(`Welcome, ${fullName}! I've learned your preferences for ${genres.join(', ')} movies. Ask me for personalized recommendations!`, false);
         } else {
-            alert('Registration failed: ' + data.message);
+            alert('Registration failed: ' + data.error);
         }
     } catch (error) {
         console.error('Registration error:', error);
@@ -452,7 +451,6 @@ saveProfile.addEventListener('click', async () => {
     }
 });
 
-// Logout functionality
 logoutBtn.addEventListener('click', () => {
     // Call Flask logout endpoint
     fetch('/user/logout')
@@ -466,7 +464,7 @@ logoutBtn.addEventListener('click', () => {
 
             // Update UI
             loginBtn.style.display = 'block';
-            profileBtn.style.display = 'none';
+            document.getElementById('profilePageBtn').style.display = 'none';
             logoutBtn.style.display = 'none';
             userProfile.style.display = 'none';
 
@@ -484,20 +482,6 @@ logoutBtn.addEventListener('click', () => {
 // Modal controls
 loginBtn.addEventListener('click', () => {
     loginModal.style.display = 'flex';
-});
-
-profileBtn.addEventListener('click', () => {
-    // Populate form with current data
-    document.getElementById('fullName').value = currentUser.fullName || '';
-    document.getElementById('email').value = currentUser.email || '';
-    document.getElementById('age').value = userPreferences.age || '';
-
-    // Check genre boxes
-    document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(cb => {
-        cb.checked = userPreferences.genres.includes(cb.value);
-    });
-
-    profileModal.style.display = 'flex';
 });
 
 // Close modals when clicking outside
@@ -550,7 +534,7 @@ function generateAutoRecommendations() {
             setTimeout(async () => {
                 try {
                     const aiResponse = await getAIResponse(autoMessage);
-                    addMessage(aiResponse, false, aiResponse.data);
+                    addMessage(aiResponse.ai_response, false, aiResponse.data);
                 } catch (error) {
                     console.error('Auto-recommendation error:', error);
                     addMessage("Based on your profile, I recommend checking out popular movies in your preferred genres!", false);
