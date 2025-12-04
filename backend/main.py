@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from dotenv import load_dotenv
 from os import getenv
+from libs.database.csv import InitializeMovieData
 
 app = Flask(__name__)
 
@@ -17,5 +18,6 @@ def index():
 
 if __name__ == "__main__":
     load_dotenv()
+    InitializeMovieData() # First initialization
     app.config['secrect_key'] = getenv("FLASK_SECRET_KEY")
     app.run(threaded=True, debug=True, port=5000)
