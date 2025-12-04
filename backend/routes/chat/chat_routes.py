@@ -30,20 +30,9 @@ def ask():
             return error()
         
         userDataQuery = user.Querify()
-        question = f"The user has written a message to you. Take the following preferences into consideration when answering: ({userDataQuery}). Avoid mentioning the preferences unless prompted, but give your suggestions. The user's message is the following: \"{userMessage}\""
-        
+
         # Get response from OpenAI
-        ai_response = ask_openai(question)
-        
-        try:
-            # Grab the last 13 elements and restore their original order (movie data is reversed by default)
-            data = list(InitializeMovieData().values())[-13:]
-            data.reverse()
-        except IndexError:
-            pass
-        except Exception as e:
-            print(f"Failed to initialize movie data: {e}")
-            return error()
+        ai_response = ask_openai(userDataQuery, userMessage)
         
         return jsonify({
             "success": True,

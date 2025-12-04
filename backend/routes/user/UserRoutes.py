@@ -1,6 +1,6 @@
 from flask import request, jsonify, Blueprint
 from libs.database.mongodb import MovieFinderDB, PWHash, DuplicateUsernameError
-from libs.authentication import TokenRequired, CreateToken, DecodeToken
+from libs.authentication import TokenRequired, CreateToken, DecodeToken, TryFreeToken
 from libs.database.csv import InitializeMovieData
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
@@ -38,7 +38,6 @@ def login():
     db = MovieFinderDB()
 
     user = db.GetUserByUsername(username)
-    print(user.Querify())
 
     if user and user.pwh == PWHash(str(password).encode(), user.salt):
         token = CreateToken(username)
@@ -48,22 +47,21 @@ def login():
             "response": {
                 "jwt": token
             }
-        })
+        }), 200
     else:
         return jsonify({
             "success": False,
             "error": "Invalid credentials"
-        }), 401
+        }), 403
 
 @user_bp.route("/ratemovie", methods=['POST'])
-@TokenRequired
 def ratemovie():
     data = request.get_json()
     try:
         token = DecodeToken(data.get('jwt'))
     except Exception:
         print("User tried using bad token")
-        return jsonify({'success': False, 'error': "Bad token"}), 400
+        return jsonify({'success': False, 'error': "Bad token"}), 401
     movieId = data.get('movieId')
     rating = data.get('rating')
     movieData = InitializeMovieData()
@@ -74,15 +72,56 @@ def ratemovie():
     db = MovieFinderDB()
     user = db.GetUserByUsername(token.get("username"))
     if not user:
-        return jsonify({'success': False, 'error': "Missing user"}), 400
+        return jsonify({'success': False, 'error': "Missing user"}), 401
     try:
-        user.RateMovie(movieId, rating)
+        if not user.RateMovie(movieId, rating):
+            return jsonify({'success': False, 'error': "Failed to rate the movie"})
     except LookupError as err:
         print(f"Failed to rate movie: {err}")
-        return jsonify({'success': False, 'message': err})
-        
-    return jsonify({'success': True, 'message': "Movie Successfully rated"})
+        return jsonify({'success': False, 'error': err})
+    return jsonify({'success': True, 'message': "Movie Successfully rated"}), 200
 
-@user_bp.route("/logout", methods=['POST'])
+@user_bp.route("/fetchmovies", methods=['POST'])
+@TokenRequired
+def fetchmovies():
+    try:
+        # Grab the last 13 elements and restore their original order (movie data is reversed by default)
+        data = list(InitializeMovieData().values())[-13:]
+        data.reverse()
+    except IndexError:
+        pass
+    except Exception as e:
+        print(f"Failed to initialize movie data: {e}")
+        return jsonify({'success': False, 'error': "A serverside error has occured."})
+    return jsonify({'success': True, 'message': "Successfully fetched movie data", 'response': {
+        'movieData': data
+    }}), 200
+
+@user_bp.route("/fetchratings", methods=['POST'])
+def fetchratings():
+    data = request.get_json()
+    try:
+        token = DecodeToken(data.get('jwt'))
+    except Exception:
+        print("User tried using bad token")
+        return jsonify({'success': False, 'error': "Bad token"}), 401
+    db = MovieFinderDB()
+    user = db.GetUserByUsername(token.get('username'))
+    if not user:
+        return jsonify({'success': False, 'error': "User does not exist"}), 401
+    return jsonify({'success': True, 'message': "Successfully fetched user ratings", 'response': {
+        'ratingsData': user.ratings
+    }}), 200
+    
+@user_bp.route("/logout", methods=['GET'])
 def logout():
-    return jsonify({"success": True, "message": "Logged out"})
+    data = request.get_json()
+    try:
+        token = DecodeToken(data.get('jwt'))
+    except Exception:
+        print("User tried using bad token")
+        return jsonify({'success': False, 'error': "Bad token"}), 401
+    if TryFreeToken(token.get('username')):
+        return jsonify({'success': True, 'message': f"Successfully logged user {token.get('username')} out"}), 200
+    else:
+        return jsonify({'success': False, 'error': "User is not logged in"}), 403

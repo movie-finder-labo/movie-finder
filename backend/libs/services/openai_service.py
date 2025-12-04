@@ -16,14 +16,14 @@ def get_openai_client():
     
     return OpenAI(api_key=api_key)
 
-def ask_openai(question: str) -> str:
+def ask_openai(preferences: str, question: str) -> str:
     """Ask OpenAI a question and get response"""
     try:
         client = get_openai_client()
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a helpful movie recommendation assistant. Provide personalized movie suggestions based on user preferences."},
+                {"role": "system", "content": "You are a helpful movie recommendation assistant. Provide personalized movie suggestions based on user preferences, which are: " + preferences},
                 {"role": "user", "content": question}
             ],
             max_tokens=400
