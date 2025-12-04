@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 from pymongo.database import Database
 from pymongo.collection import Collection
 from bson.objectid import ObjectId
@@ -15,7 +15,7 @@ def PWHash(pw: bytes, s: bytes) -> bytes:
 
 class User(object):
     """ User wrapper object """
-    def __init__(self, id: ObjectId, pwh: bytes, salt: bytes, username: str, age: int, genres: list[tuple[str, int]], ratings: list[str], created: datetime):
+    def __init__(self, id: ObjectId, pwh: bytes, salt: bytes, username: str, age: int, genres: list[str], ratings: dict[str, int], created: datetime):
         if not ObjectId.is_valid(id): raise ValueError("BAD ID")
         self.id: ObjectId = id
         self.pwh: bytes = pwh
@@ -23,26 +23,26 @@ class User(object):
         self.username: str = username
         self.age: int = age
         self.genres: list[str] = genres
-        self.ratings: list[tuple[str, int]] = ratings
+        self.ratings: dict[str, int] = ratings
         self.created: datetime = created
     
     @staticmethod
     def fromDict(dict: dict | None):
         """ Creates a user object from a dictionary. All the arguments for __init__ is expected to exists as keys by the same names in the dictionary."""
         if dict is None: return None
-        return User(dict.get("_id", None), dict.get("pwh", None), dict.get("salt", None), dict.get("username", "bad_username"), dict.get("age", -1), dict.get("genres", []), dict.get("ratings", []), dict.get("created", datetime.now(timezone.utc)))
+        return User(dict.get("_id", None), dict.get("pwh", None), dict.get("salt", None), dict.get("username", "bad_username"), dict.get("age", -1), dict.get("genres", []), dict.get("ratings", {}), dict.get("created", datetime.now(timezone.utc)))
     
-    def RateMovie(self, movieId, rating: int):
+    def RateMovie(self, movieId, rating: int) -> bool:
         rating = max(0, min(rating, 5))
-        movie = InitializeMovieData().get(movieId)
-        if not movie: raise LookupError("Movie not found")
+        if not InitializeMovieData().get(movieId): raise LookupError("Movie not found")
         db = MovieFinderDB()
         try:
-            db.UpdateUserMovieRating(self.username, movieId, rating)
+            success = db.UpdateUserMovieRating(self.username, movieId, rating)
         except Exception as err:
-            print(f"Failed to rate movie ({self.username}): {err}")
-            return
-        self.ratings[movieId] = rating
+            print(f"Failed to rate movie for user {self.username}: {err}")
+            return False
+        self.ratings.append((movieId, rating))
+        return success
     
     def ForFrontend(self) -> dict[str, any]:
         """Returns a `dict` that only comprises of the `username`, `age`, `genres` and `created` keys for frontend display. """
@@ -127,10 +127,23 @@ class MovieFinderDB(object):
         return self.GetUserBy("username", username)
 
     def GetUserById(self, id: ObjectId) -> User | None:
+        """ Tries to get a user by it's object ID """
         return self.GetUserBy("_id", id)
 
-    def UpdateUserMovieRating(self, username: str, movieId: str, rating: int) -> None:
-        self.users.update_one({"username": username, "username.ratings": {"$elemMatch", {"movieId": movieId}}}, {"$set": {"ratings.$.rating": rating}})
+    def UpdateUserMovieRating(self, username: str, movieId: str, rating: int) -> bool:
+        """ Updates or inserts a user rating """
+        update = UpdateOne(
+            filter={"username": username, "ratings.movieId": movieId},
+            update={"$set": {"ratings.$[elem].rating": rating}},
+            array_filters=[{"elem.movieId": movieId}],
+        )
+        insert = UpdateOne(
+            filter={"username": username, "ratings.movieId": {"$ne": movieId}},
+            update={"$push": {"ratings": {"movieId": movieId, "rating": rating}}},
+        )
+        # Tries to update any existing rating first, pushes new rating otherwise
+        result = self.users.bulk_write([update, insert])
+        return bool(result.modified_count)
 
     def CreateUser(self, username: str, password: str, age: int, genres: list[str]) -> User:
         """ Creates and inserts a new user into the users collection. Make sure to wrap in a `try` clause, as this function can raise exceptions if:
@@ -141,7 +154,7 @@ class MovieFinderDB(object):
         createdDate = datetime.now(timezone.utc)
         salt = bcrypt.gensalt()
         pwh = PWHash(password.encode(), salt)
-        result = self.users.insert_one({"username": username, "pwh": pwh, "salt": salt, "created": createdDate, "age": age, "genres": genres})
+        result = self.users.insert_one({"username": username, "pwh": pwh, "salt": salt, "created": createdDate, "age": age, "genres": genres, "ratings": []})
         return self.GetUserById(result.inserted_id)
     
     def DeleteUser(self, username: str) -> bool:

@@ -25,15 +25,47 @@ let userPreferences = {
 };
 
 let movies = []
+let ratings = []
+
+function logout() {
+    currentUser = null;
+    userPreferences = { genres: [], age: 0 };
+
+    // Clear localStorage
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userPreferences');
+
+    // Update UI
+    loginBtn.style.display = 'block';
+    profileBtn.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    userProfile.style.display = 'none';
+
+    // Reset movies to default view
+    movies = []
+    ratings = []
+    renderMovies(movies, false);
+
+    // Logout message
+    addMessage("You've been logged out. Feel free to login again for personalized recommendations!", false);
+}
+
+function shouldLogout(status) {
+    if (status != 401) return false
+    logout()
+    console.log("Unauthorized token, please relog...")
+    return true
+}
 
 // Check if user is logged in
-function checkLoginStatus() {
+async function checkLoginStatus() {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
         userPreferences = JSON.parse(localStorage.getItem('userPreferences')) || userPreferences;
         updateUIForLoggedInUser();
         renderMovies(getRecommendedMovies());
+        await fetchData()
     }
 }
 
@@ -64,23 +96,7 @@ function getUserRatingStars(movieId) {
 // Get user rating for a movie
 function getUserRating(movieId) {
     if (!currentUser) return 0;
-    
-    const userRatings = JSON.parse(localStorage.getItem('userRatings')) || {};
-    const userSpecificRatings = userRatings[currentUser.username] || {};
-    return userSpecificRatings[movieId] || 0;
-}
-
-// Save user rating for a movie
-function saveUserRating(movieId, rating) {
-    if (!currentUser) return;
-    
-    let userRatings = JSON.parse(localStorage.getItem('userRatings')) || {};
-    if (!userRatings[currentUser.username]) {
-        userRatings[currentUser.username] = {};
-    }
-    
-    userRatings[currentUser.username][movieId] = rating;
-    localStorage.setItem('userRatings', JSON.stringify(userRatings));
+    return ratings[movieId]
 }
 
 // Add event listeners to rating stars
@@ -102,8 +118,6 @@ function handleStarClick(event) {
     const rating = parseInt(star.getAttribute('data-rating'));
     const movieId = star.closest('.user-rating').getAttribute('data-movie-id');
     
-    saveUserRating(movieId, rating);
-    
     // Update the stars visually
     const stars = star.parentElement.querySelectorAll('.star');
     stars.forEach((s, index) => {
@@ -116,6 +130,73 @@ function handleStarClick(event) {
     
     // Optional: Send rating to backend
     sendRatingToBackend(movieId, rating);
+}
+async function fetchMovieData() {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch('/user/fetchmovies', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                jwt: currentUser.jwt,
+            })
+        });
+
+        if (shouldLogout(response.status)) return
+        
+        const data = await response.json();
+        if (data.success) {
+            console.log('Successfully fetched movie data', data);
+            movies = data.response.movieData
+        }
+        else {
+            console.log('Failed to fetch movie data:', data.error)
+        }
+    } catch (error) {
+        console.error('Failed to fetch movie data:', error);
+    }
+}
+
+async function fetchRatingsData() {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch('/user/fetchratings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                jwt: currentUser.jwt,
+            })
+        });
+
+        if (shouldLogout(response.status)) return
+        
+        const data = await response.json();
+        if (data.success) {
+            console.log('Successfully fetched ratings data', data);
+            ratingsData = []
+            data.response.ratingsData.forEach(element => {
+                ratingsData[element.movieId] = element.rating
+            })
+            ratings = ratingsData
+        }
+        else {
+            console.log('Failed to fetch ratings data:', data.error)
+        }
+    } catch (error) {
+        console.error('Failed to fetch ratings data:', error);
+    }
+}
+
+async function fetchData() {
+    await fetchMovieData()
+    await fetchRatingsData()
+    renderMovies(movies, false)
 }
 
 // Send rating to backend (optional)
@@ -134,10 +215,12 @@ async function sendRatingToBackend(movieId, rating) {
                 rating: rating
             })
         });
+        if (shouldLogout(response.status)) return
         
         const data = await response.json();
         if (data.success) {
             console.log('Rating saved to backend');
+            ratings[movieId] = rating
         }
         else {
             console.log('Failed to save rating to backend:', data.error)
@@ -216,35 +299,30 @@ function getRecommendedMovies() {
 }
 
 // chat functionality
-function addMessage(message, isUser, movieData) {
+function addMessage(message, isUser) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
     messageDiv.textContent = message;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    if (movieData) {
-        movies = movieData
-        renderMovies(movies, false)
-    }
 }
 
 // Enhanced AI response with OpenAI
 async function getAIResponse(userMessage) {
     try {
-        // Add user context to the message if logged in
-        let enhancedMessage = userMessage;
-        if (currentUser) {
-            enhancedMessage = `User preferences: ${userPreferences.genres.join(', ')} genres, age ${userPreferences.age}. Question: ${userMessage}`;
-        }
-
         const response = await fetch('/chat/ask', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ message: enhancedMessage, jwt: currentUser.jwt || null})
+            body: JSON.stringify({ message: userMessage, jwt: currentUser.jwt || null})
         });
 
+        if (shouldLogout(response.status))
+        {
+            addMessage("You must be logged in to ask for recommendations.", false)
+            return
+        }
         const data = await response.json();
         
         if (data.success) {
@@ -301,7 +379,7 @@ async function sendMessage() {
 
         try {
             const aiResponse = await getAIResponse(message);
-            addMessage(aiResponse.ai_response, false, aiResponse.data);
+            addMessage(aiResponse.ai_response, false);
         } catch (error) {
             console.error('Error getting AI response:', error);
             addMessage("Sorry, I encountered an error. Please try again.", false);
@@ -327,6 +405,7 @@ submitLogin.addEventListener('click', async () => {
                 body: JSON.stringify({ username, password })
             });
 
+            if (shouldLogout(response.status)) return
             const data = await response.json();
 
             if (data.success) {
@@ -344,6 +423,7 @@ submitLogin.addEventListener('click', async () => {
 
                 // Welcome message
                 addMessage(`Welcome, ${username}! I'm ready to help you find great movies.`, false);
+                await fetchData()
             } else {
                 alert('Login failed: ' + data.message);
             }
@@ -407,6 +487,7 @@ saveProfile.addEventListener('click', async () => {
             })
         });
 
+        if (shouldLogout(response.status)) return
         const data = await response.json();
 
         if (data.success) {
@@ -443,6 +524,7 @@ saveProfile.addEventListener('click', async () => {
 
             // Welcome message
             addMessage(`Welcome, ${fullName}! I've learned your preferences for ${genres.join(', ')} movies. Ask me for personalized recommendations!`, false);
+            await fetchData()
         } else {
             alert('Registration failed: ' + data.message);
         }
@@ -456,26 +538,7 @@ saveProfile.addEventListener('click', async () => {
 logoutBtn.addEventListener('click', () => {
     // Call Flask logout endpoint
     fetch('/user/logout')
-        .then(() => {
-            currentUser = null;
-            userPreferences = { genres: [], age: 0 };
-
-            // Clear localStorage
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('userPreferences');
-
-            // Update UI
-            loginBtn.style.display = 'block';
-            profileBtn.style.display = 'none';
-            logoutBtn.style.display = 'none';
-            userProfile.style.display = 'none';
-
-            // Reset movies to default view
-            renderMovies(movies, false);
-
-            // Logout message
-            addMessage("You've been logged out. Feel free to login again for personalized recommendations!", false);
-        })
+        .then(() => logout())
         .catch(error => {
             console.error('Logout error:', error);
         });
@@ -550,7 +613,7 @@ function generateAutoRecommendations() {
             setTimeout(async () => {
                 try {
                     const aiResponse = await getAIResponse(autoMessage);
-                    addMessage(aiResponse, false, aiResponse.data);
+                    addMessage(aiResponse, false);
                 } catch (error) {
                     console.error('Auto-recommendation error:', error);
                     addMessage("Based on your profile, I recommend checking out popular movies in your preferred genres!", false);
