@@ -21,8 +21,6 @@ def TokenRequired(f):
     def decorated(*args, **kwargs):
         data = request.get_json()
         token = data.get('jwt')
-        if not token:
-            return jsonify({'error': 'user token is missing'}), 401
         try:
             DecodeToken(token)
         except Exception:

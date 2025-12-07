@@ -86,7 +86,7 @@ def ratemovie():
         return jsonify({'success': False, 'error': err})
     return jsonify({'success': True, 'message': "Movie Successfully rated"}), 200
 
-@user_bp.route("/fetchmovies", methods=['POST'])
+@user_bp.route("/fetchmovies", methods=['POST'], endpoint="fetchmovies")
 @TokenRequired
 def fetchmovies():
     try:
