@@ -1,11 +1,16 @@
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, render_template, Blueprint
 from libs.database.mongodb import MovieFinderDB, PWHash, DuplicateUsernameError
 from libs.authentication import TokenRequired, CreateToken, DecodeToken, TryFreeToken
 from libs.database.csv import InitializeMovieData
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
 
-@user_bp.route("/register", methods=['POST'])
+@user_bp.route("/profile", endpoint="profile_page")
+def profile():
+    """Profile page route"""
+    return render_template("profile.html")
+
+@user_bp.route("/register", methods=['POST'], endpoint="register_user")
 def register():
     data = request.get_json()
 
@@ -30,7 +35,7 @@ def register():
     return jsonify({"success":True, "message": "Registration successful", "response": {"jwt": token}}), 200
 
 
-@user_bp.route("/login", methods=['POST'])
+@user_bp.route("/login", methods=['POST'], endpoint="login_user")
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -97,6 +102,45 @@ def fetchmovies():
         'movieData': data
     }}), 200
 
+@user_bp.route("/delete", methods=['POST'], endpoint="delete_account")
+@TokenRequired
+def delete_account():
+    """Delete user account"""
+    data = request.get_json()
+    
+    try:
+        token = DecodeToken(data.get('jwt'))
+    except Exception:
+        return jsonify({'success': False, 'error': "Bad token"}), 400
+    
+    confirmation = data.get('confirmation')
+    
+    if confirmation != "DELETE":
+        return jsonify({'success': False, 'error': "Confirmation required"}), 400
+    
+    db = MovieFinderDB()
+    username = token.get("username")
+    
+    try:
+        # Delete user from database
+        success = db.DeleteUser(username)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "Account deleted successfully"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Failed to delete account"
+            }), 400
+            
+    except Exception as e:
+        print(f"Failed to delete account: {e}")
+        return jsonify({'success': False, 'error': "An error occurred while deleting account"}), 400
+
+@user_bp.route("/logout", methods=['POST'], endpoint="logout_user")
 @user_bp.route("/fetchratings", methods=['POST'])
 def fetchratings():
     data = request.get_json()
