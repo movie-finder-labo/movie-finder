@@ -66,7 +66,7 @@ confirmDeleteBtn.addEventListener('click', async () => {
     if (confirmDeleteInput.value === 'DELETE') {
         try {
             // Get JWT token from localStorage if available
-            const jwt = localStorage.getItem('jwt') || '';
+            const currentUser = JSON.parse(localStorage.getItem('currentUser')) || {}
             
             const response = await fetch('/user/delete', {
                 method: 'POST',
@@ -74,7 +74,7 @@ confirmDeleteBtn.addEventListener('click', async () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    jwt: jwt,
+                    jwt: currentUser.jwt || '',
                     confirmation: "DELETE"
                 })
             });
@@ -85,7 +85,6 @@ confirmDeleteBtn.addEventListener('click', async () => {
                 // Clear local storage
                 localStorage.removeItem('currentUser');
                 localStorage.removeItem('userPreferences');
-                localStorage.removeItem('jwt');
                 
                 // Remove user's ratings
                 const userRatings = JSON.parse(localStorage.getItem('userRatings')) || {};
@@ -113,7 +112,6 @@ logoutBtn.addEventListener('click', () => {
         .then(() => {
             localStorage.removeItem('currentUser');
             localStorage.removeItem('userPreferences');
-            localStorage.removeItem('jwt');
             window.location.href = '/';
         })
         .catch(error => {
