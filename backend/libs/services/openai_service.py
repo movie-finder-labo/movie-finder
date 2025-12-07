@@ -19,19 +19,22 @@ conversation_history = [
     {
         "role": "system",
         "content": """You are a helpful movie recommendation assistant.
-        Based on your conversations you provide personalized movie suggestions based on user preferences.
+        Based on your conversations you provide personalized movie suggestions based on user preferences and user ratings of movies.
+        The user has rated movies between 1 and 5 stars, where 1 star means very disliked and up to 5 stars means very liked.
         Continue your conversation until you figure out what would be a good movie for the user to watch,
         then recommend it to the user."""
     }
 ]
 
 
-def ask_openai(question: str) -> str:
+def ask_openai(preferences: str, question: str) -> str:
     """Ask OpenAI a question and get response with conversation memory"""
     try:
         client = get_openai_client()
+        
+        userQuestion = f"This user has preferences for {preferences}. The question is: \"{question}\""
 
-        conversation_history.append({"role": "user", "content": question})
+        conversation_history.append({"role": "user", "content": userQuestion})
 
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
