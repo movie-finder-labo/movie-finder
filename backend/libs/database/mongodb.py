@@ -43,20 +43,10 @@ class User(object):
             return False
         self.ratings.append((movieId, rating))
         return success
-    
-    def ForFrontend(self) -> dict[str, any]:
-        """Returns a `dict` that only comprises of the `username`, `age`, `genres` and `created` keys for frontend display. """
-        return {
-            "username": self.username,
-            "age": self.age,
-            "genres": self.genres,
-            "raints": self.ratings,
-            "created": self.created,
-        }
         
     def Querify(self) -> str:
         """ Produces a query string usable for an AI prompt. Takes `ratings`, `genres` and `age` into account """
-        return f"{self.QuerifyGenres()}, {self.QuerifyRatings()} and the user's age which is {self.age or "N/A"}. Ignore anything that is \"N/A\""
+        return f"As of now I only have these preferences: {self.QuerifyGenres()}, {self.QuerifyRatings()} and the user's age which is {self.age or "N/A"}. Ignore anything that is \"N/A\""
         
     def QuerifyGenres(self) -> str:
         """ Formats all genres into an AI prompt query """
@@ -69,14 +59,14 @@ class User(object):
         for r in self.ratings:
             movie = movies.get(r.get('movieId'))
             if not movie: continue
-            ratings.append(f"{movie.get('title', "N/A")} {r.get('rating', "N/A")}")
-        return "the following movie ratings (<title> <rating>), if any: \"" + ",".join(ratings) + "\""
+            ratings.append(f"{movie.get('title', "N/A")} ({movie.get('year', "N/A")}) [{r.get('rating', "N/A")}/5]")
+        return "the following movie ratings (<title> (<year>) [<rating>/5]), if any: \"" + ",".join(ratings) + "\""
     
     def __str__(self):
         return f"User \"{self.username}\" [{str(self.id)}]"
     
     def __repr__(self):
-        self.__str__()
+        return self.__str__()
 
 class DuplicateUsernameError(Exception):
     pass

@@ -24,7 +24,8 @@ def ask():
         userMessage = data['message']
         token = DecodeToken(data.get('jwt'))
         db = MovieFinderDB()
-        user = db.GetUserByUsername(token.get("username"))
+        username = token.get("username")
+        user = db.GetUserByUsername(username)
         if not user:
             print("Failed to generate chat response: Failed to find user.")
             return error()
@@ -32,7 +33,7 @@ def ask():
         userDataQuery = user.Querify()
 
         # Get response from OpenAI
-        ai_response = ask_openai(userDataQuery, userMessage)
+        ai_response = ask_openai(username, userDataQuery, userMessage)
         
         return jsonify({
             "success": True,
