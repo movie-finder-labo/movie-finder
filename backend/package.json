@@ -1,0 +1,13 @@
+{
+  "name": "movie-finder-frontend-tests",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "browserify": "^17.0.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.2.0"
+  }
+}

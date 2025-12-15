@@ -1,6 +1,6 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_from_directory
 from dotenv import load_dotenv
-from os import getenv
+from os import getenv, path
 from libs.database.csv import InitializeMovieData
 
 app = Flask(__name__)
