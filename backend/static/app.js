@@ -1,3 +1,11 @@
+import {
+    shouldLogout,
+    calculateMatchScore,
+    getRecommendedMovies,
+    getBasicAIResponse,
+    getUserRating
+} from 'appLogic.cjs'
+
 // DOM elements
 const chatMessages = document.getElementById('chatMessages');
 const userInput = document.getElementById('userInput');
@@ -26,36 +34,6 @@ let userPreferences = {
 
 let movies = []
 let ratings = []
-
-function logout() {
-    currentUser = null;
-    userPreferences = { genres: [], age: 0 };
-
-    // Clear localStorage
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('userPreferences');
-
-    // Update UI
-    loginBtn.style.display = 'block';
-    profileBtn.style.display = 'none';
-    logoutBtn.style.display = 'none';
-    userProfile.style.display = 'none';
-
-    // Reset movies to default view
-    movies = []
-    ratings = []
-    renderMovies(movies, false);
-
-    // Logout message
-    addMessage("You've been logged out. Feel free to login again for personalized recommendations!", false);
-}
-
-function shouldLogout(status) {
-    if (status != 401) return false
-    logout()
-    console.log("Unauthorized token, please relog...")
-    return true
-}
 
 // Check if user is logged in
 async function checkLoginStatus() {
@@ -92,12 +70,6 @@ function getUserRatingStars(movieId) {
     
     starsHtml += '</div>';
     return starsHtml;
-}
-
-// Get user rating for a movie
-function getUserRating(movieId) {
-    if (!currentUser) return 0;
-    return ratings[movieId]
 }
 
 // Add event listeners to rating stars
@@ -267,38 +239,6 @@ function renderMovies(movieList, showMatchScore = true) {
     addRatingEventListeners();
 }
 
-// Calculate match score for recommendations
-function calculateMatchScore(movie) {
-    let score = 0;
-
-    // Genre match - more weight since we only have genres now
-    const genreMatches = movie.genres.filter(genre =>
-        userPreferences.genres.includes(genre)
-    ).length;
-    score += (genreMatches / movie.genres.length) * 70;
-
-    // Age suitability
-    if (userPreferences.age >= (movie.ageSuitability || 13)) {
-        score += 30;
-    }
-
-    return Math.max(0, Math.min(100, Math.round(score)));
-}
-
-// Get recommended movies
-function getRecommendedMovies() {
-    if (!currentUser) {
-        return movies.sort((a, b) => b.rating - a.rating);
-    }
-
-    return movies
-        .map(movie => ({
-            ...movie,
-            matchScore: calculateMatchScore(movie)
-        }))
-        .sort((a, b) => b.matchScore - a.matchScore);
-}
-
 // chat functionality
 function addMessage(message, isUser) {
     const messageDiv = document.createElement('div');
@@ -337,30 +277,6 @@ async function getAIResponse(userMessage) {
         console.error('Network error:', error);
         // Fallback to basic response if network fails
         return getBasicAIResponse(userMessage);
-    }
-}
-
-// Basic AI response as fallback
-function getBasicAIResponse(userMessage) {
-    const lowerMessage = userMessage.toLowerCase();
-
-    if (currentUser) {
-        if (lowerMessage.includes('recommend') || lowerMessage.includes('suggest')) {
-            const topMovies = getRecommendedMovies().slice(0, 3);
-            return {ai_response: `Based on your profile, I recommend: "${topMovies[0].title}", "${topMovies[1].title}", and "${topMovies[2].title}".`};
-        }
-    }
-
-    if (lowerMessage.includes('action')) {
-        return {ai_response: "For action movies, check out 'The Dark Knight' or 'Inception'."};
-    } else if (lowerMessage.includes('drama')) {
-        return {ai_response: "For drama, I recommend 'The Shawshank Redemption'."};
-    } else if (lowerMessage.includes('comedy')) {
-        return {ai_response: "For comedy films, you might enjoy light-hearted movies with humorous plots."};
-    } else if (lowerMessage.includes('sci-fi') || lowerMessage.includes('science fiction')) {
-        return {ai_response: "For science fiction, I recommend 'Inception' or 'The Matrix'."};
-    } else {
-        return {ai_response: "I can help you find great movies. Tell me what genres you like or what mood you're in!"};
     }
 }
 
