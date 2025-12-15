@@ -3,6 +3,8 @@ dist/
 __pycache__/
 # Ratings data
 backend/data/
+# Must be built
+backend/static/app_bundle.js
 *.pyc
 .venv/
 .env

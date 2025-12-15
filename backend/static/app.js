@@ -1,10 +1,10 @@
-import {
-    shouldLogout,
-    calculateMatchScore,
-    getRecommendedMovies,
-    getBasicAIResponse,
-    getUserRating
-} from 'appLogic.cjs'
+var appLogic = require('./appLogic.cjs')
+
+for (const key in appLogic) {
+    if (Object.hasOwnProperty.call(appLogic, key)) {
+        window[key] = appLogic[key];
+    }
+}
 
 // DOM elements
 const chatMessages = document.getElementById('chatMessages');
@@ -25,15 +25,27 @@ const userName = document.getElementById('userName');
 const userAvatar = document.getElementById('userAvatar');
 const profilePageBtn = document.getElementById('profilePageBtn'); 
 
-// user data
-let currentUser = null;
-let userPreferences = {
-    genres: [],
-    age: 0
-};
+function logout() {
+    currentUser = null;
+    userPreferences = { genres: [], age: 0 };
 
-let movies = []
-let ratings = []
+    // Clear localStorage
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userPreferences');
+
+    // Update UI
+    loginBtn.style.display = 'block';
+    profileBtn.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    userProfile.style.display = 'none';
+
+    // Reset movies to default view
+    resetState()
+    renderMovies(movies, false);
+
+    // Logout message
+    addMessage("You've been logged out. Feel free to login again for personalized recommendations!", false);
+}
 
 // Check if user is logged in
 async function checkLoginStatus() {
@@ -527,6 +539,14 @@ function generateAutoRecommendations() {
 
 // Initialize the app
 function initApp() {
+    currentUser = null;
+    userPreferences = {
+        genres: [],
+        age: 0
+    };
+    movies = []
+    ratings = []
+
     // Initial movie render
     renderMovies(movies, false);
 

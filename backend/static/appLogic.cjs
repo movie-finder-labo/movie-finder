@@ -1,14 +1,11 @@
 // backend/static/appLogic.cjs
 
-
 // ---------------- STATE HELPERS ----------------
 function resetState() {
   currentUser = null;
   userPreferences = { genres: [], age: 0 };
   movies = [];
   ratings = {};
-  // MOCKS
-  logout = function() {}
 }
 
 function setCurrentUser(user) {
@@ -21,10 +18,7 @@ function setRatings(newRatings) {
 
 // ---------------- LOGIC FUNCTIONS ----------------
 function shouldLogout(status) {
-    if (status != 401) return false
-    logout()
-    console.log("Unauthorized token, please relog...")
-    return true
+  return status == 401
 }
 
 // Calculate match score for recommendations
@@ -96,19 +90,4 @@ module.exports = {
   getRecommendedMovies,
   getBasicAIResponse,
   resetState,
-  setCurrentUser,
-  setRatings,
-
-  get currentUser() {
-    return currentUser;
-  },
-  get userPreferences() {
-    return userPreferences;
-  },
-  get movies() {
-    return movies;
-  },
-  get ratings() {
-    return ratings;
-  }
 };
