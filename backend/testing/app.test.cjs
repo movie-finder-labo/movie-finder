@@ -33,8 +33,8 @@ describe('shouldLogout()', () => {
 // ---------------- 2. calculateMatchScore ----------------
 describe('calculateMatchScore()', () => {
   test('returns a score between 0 and 100', () => {
-    appLogic.userPreferences.genres.push('Action');
-    appLogic.userPreferences.age = 18;
+    userPreferences.genres.push('Action');
+    userPreferences.age = 18;
 
     const movie = {
       genres: ['Action', 'Comedy'],
@@ -55,8 +55,8 @@ describe('getUserRating()', () => {
   });
 
   test('returns correct rating when user is logged in', () => {
-    appLogic.setCurrentUser({ username: 'testUser' });
-    appLogic.setRatings({ 1: 4 });
+    currentUser = { username: 'testUser' };
+    ratings[1] = 4;
 
     expect(getUserRating(1)).toBe(4);
   });
@@ -65,7 +65,7 @@ describe('getUserRating()', () => {
 // ---------------- 4. getRecommendedMovies ----------------
 describe('getRecommendedMovies()', () => {
   test('sorts movies by rating when user is not logged in', () => {
-    appLogic.movies.push(
+    movies.push(
       { title: 'Movie A', rating: 6, genres: ['Action'], ageSuitability: 13 },
       { title: 'Movie B', rating: 9, genres: ['Drama'], ageSuitability: 13 }
     );

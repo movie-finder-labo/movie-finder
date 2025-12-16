@@ -19,4 +19,4 @@ BUILD TOOLS:
     - Browserify in order to bundle app.js and appLogic.cjs:
         - (Initialize package.json, skip step if package.json already exists) npm init -y
         - (Install broswerify) npm install browserify --save-dev
-        - (Build command, both paths must be relative to backend/static) npx browserify app.js -o app_bundle.js
+        - (app_bundle.js must be built everytime app.js or appLogic.cjs are altered, is relative to backend/static) npx browserify app.js -o app_bundle.js

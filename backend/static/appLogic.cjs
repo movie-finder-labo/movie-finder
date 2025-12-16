@@ -8,14 +8,6 @@ function resetState() {
   ratings = {};
 }
 
-function setCurrentUser(user) {
-  currentUser = user;
-}
-
-function setRatings(newRatings) {
-  ratings = newRatings;
-}
-
 // ---------------- LOGIC FUNCTIONS ----------------
 function shouldLogout(status) {
   return status == 401

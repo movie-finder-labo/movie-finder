@@ -1,118 +1,105 @@
-from os import listdir
-from os.path import isfile
+import os
 import re
+from os.path import isfile, join, dirname, abspath
 
-dataFilePath = "data\\"
-""" Relative datafile path to ../movie-finder/backend/ """
+BASE_DIR = dirname(dirname(dirname(abspath(__file__))))
+DATA_DIR = join(BASE_DIR, "data")
+
 dataFileExtension = ".csv"
 MovieData = {}
-""" Loaded formatted set of movie data based off of `CSVData`. Uses `movieId` as an index """
+""" Loaded formatted set of movie data based off of CSVData. Uses movieId as key """
 CSVData = {}
-""" Loaded raw CSV data indexed by related file name (e.g `links`, `movies`, etc...) """
+""" Loaded raw CSV data indexed by file name (movies, ratings, tags, etc.) """
 
 def formatCSVData(data: dict):
-    cache = {} # Dgaf about space complexity. Assume at least one or more related rows per movieId in the other files.
+    cache = {}
     def Lookup(key: str, id):
-        d = data[key]
+        d = data.get(key, [])
         c = cache.get(key, {})
-        value = c.get(id, None)
-        if not value:
-            # Keep track of the index inside the loop. We will not read N entries for every iteration, each entry only gets read once. Anything that doesn't match gets cached and looked up later.
-            try:  
+        value = c.get(id)
+        if value is None:
+            try:
                 i = c.get("_idx", 0)
                 x = d[i]
-                xId = x and x["movieId"] or None
-                
-                if x and xId == id:
+                xId = x.get("movieId") if x else None
+
+                if xId == id:
                     c[xId] = x
                     return x
-                elif x is not None:
+                elif xId is not None:
                     c[xId] = x
-            except IndexError: # Do nothing if i is out of bounds. We are trying to explicitly avoid calling the len function for checking index bounds, as iterating over d defeats the purpose
+            except IndexError:
                 pass
             finally:
-                c["_idx"] = i + 1
+                c["_idx"] = c.get("_idx", 0) + 1
                 cache[key] = c
-                
         return value
-    
+
     def formatMovie(movie: dict):
-        match = re.search(r"(.+?)\s\((\d{4})\)$", movie["title"])
-        title = match and match.group(1).strip() or movie["title"]
-        year = match and match.group(2) or "N/A"
-        id = movie["movieId"]
-        ratingLookup = Lookup("ratings", id)
-        moodLookup = Lookup("tags", id)
-        fm = {
-            "id": id,
+        match = re.search(r"(.+?)\s\((\d{4})\)$", movie.get("title", ""))
+        title = match.group(1).strip() if match else movie.get("title", "N/A")
+        year = match.group(2) if match else "N/A"
+        movie_id = movie.get("movieId")
+        ratingLookup = Lookup("ratings", movie_id)
+        moodLookup = Lookup("tags", movie_id)
+        return {
+            "id": movie_id,
             "title": title,
             "year": year,
-            "genres": movie["genres"].split("|"),
-            "poster": "https://via.placeholder.com/300x450/252b3d/8a8f98?text=Dark+Knight", # TODO: One of the two: imdbId,tmdbId. Maybe we can fetch the URL at some point
-            "rating": ratingLookup and ratingLookup["rating"] or "N/A",
-            "mood": moodLookup and moodLookup["tag"] or "N/A",
-            "ageSuitability": "N/A" # ??
+            "genres": movie.get("genres", "").split("|"),
+            "poster": "https://via.placeholder.com/300x450/252b3d/8a8f98?text=Movie",
+            "rating": ratingLookup.get("rating") if ratingLookup else "N/A",
+            "mood": moodLookup.get("tag") if moodLookup else "N/A",
+            "ageSuitability": "N/A"
         }
-        return fm
-    
-    fms = {}
-    for movie in data["movies"]:
-        fms[movie["movieId"]] = formatMovie(movie)
-    return fms
+    formatted = {}
+    for movie in data.get("movies", []):
+        formatted[movie["movieId"]] = formatMovie(movie)
+    return formatted
 
-def InitializeMovieData(path: str | None=None) -> dict:
-    """ Finds and loads all .cvs files located in ../movie-finder/data/* and initialises movie data objects and stores them in the global variable 'MovieData'. Repeated calls to this function just returns the already loaded cache."""
-    global MovieData
-    global CSVData
-    
-    # Don't load twice
-    try:
-        data = list(MovieData.values())
-        data[0]
+def InitializeMovieData(path: str | None = None) -> dict:
+    global MovieData, CSVData
+    if MovieData:
         return MovieData
-    except IndexError:
-        try:
-            for fp in GetDataFiles(path): # e.g ../data/movies.csv, ../data/ratings.csv
-                data = DeserializeCSV(fp)
-                if fp != dataFilePath + "movies": data.reverse() # All the files are ordered by movieId, we need to reverse to setup performance boost for the formatCSVData function. The movies file doesn't matter.
-                CSVData[fp.removeprefix(dataFilePath).removesuffix(dataFileExtension)] = data
-            MovieData = formatCSVData(CSVData)
-        except Exception as e:
-            print(f"CVS file initialization failed: {e}")
-            MovieData = {} # Roll back any changes
-        finally:
-            return MovieData
+    try:
+        for fp in GetDataFiles(path):
+            data = DeserializeCSV(fp)
+            key = os.path.basename(fp).replace(dataFileExtension, "")
+            if key != "movies":
+                data.reverse()
+            CSVData[key] = data
+        MovieData = formatCSVData(CSVData)
+    except Exception as e:
+        print(f"CSV file initialization failed: {e}")
+        MovieData = {}
+    return MovieData
 
 def IsCSV(path: str) -> bool:
-    """ Checks if the file extension of a file matches with .csv """
-    return path.endswith(dataFileExtension)
+    return path.lower().endswith(dataFileExtension)
 
-def GetDataFiles(path: str | None=None) -> list[str]:
-    path = path or dataFilePath
-    """ Finds the relative paths of all the .csv data files in ../movie-finder/backend/data """
-    fps = []
-    for p in listdir(path):
-        fp = path + p
+def GetDataFiles(path: str | None = None) -> list[str]:
+    path = path or DATA_DIR
+    files = []
+    for p in os.listdir(path):
+        fp = join(path, p)
         if isfile(fp) and IsCSV(fp):
-            fps.append(fp)
-    return fps
+            files.append(fp)
+    return files
 
 def DefaultDeserializer(row: str, cols: list[str]) -> dict:
-    """ The default csv deserializer for the DeserializeCSV function. Maps the values of a row for the corresponding columns onto a new object. """
-    match = re.split(r",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", row)
-    # Assign the values to their respective columns
+    values = re.split(r",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", row)
     obj = {}
     for i, col in enumerate(cols):
-        obj[col] = "".join(match[i].split("\""))
+        obj[col] = values[i].replace('"', "") if i < len(values) else ""
     return obj
 
 def DeserializeCSV(path: str, deserializer=None) -> list[dict]:
-    """ Reads a given csv file and uses the given deserializer (or the default serializer if none) function to map values into keys into a list of new rows of dicts """
-    if not IsCSV(path): raise Exception("Must be a CSV file (.csv)")
-    data: list[dict] = []
-    with open(file=path, encoding="mac_roman", newline='') as csvFile:
-        # Grab column names on the first line of the CSV file
+    if not IsCSV(path):
+        raise Exception("Must be a CSV file (.csv)")
+    data = []
+    with open(path, encoding="utf-8", newline="") as csvFile:
         cols = csvFile.readline().strip().split(",")
         for row in csvFile:
-            data.append((deserializer if deserializer is not None else DefaultDeserializer)(row, cols))
+            parser = deserializer if deserializer else DefaultDeserializer
+            data.append(parser(row.strip(), cols))
     return data
