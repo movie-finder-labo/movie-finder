@@ -46,7 +46,7 @@ class User(object):
         
     def Querify(self) -> str:
         """ Produces a query string usable for an AI prompt. Takes `ratings`, `genres` and `age` into account """
-        return f"As of now I only have these preferences: {self.QuerifyGenres()}, {self.QuerifyRatings()} and the user's age which is {self.age or "N/A"}. Ignore anything that is \"N/A\""
+        return f"As of now I only have these preferences: {self.QuerifyGenres()}, {self.QuerifyRatings()} and the user's age which is {self.age or 'N/A'}. Ignore anything that is \"N/A\""
         
     def QuerifyGenres(self) -> str:
         """ Formats all genres into an AI prompt query """
@@ -59,7 +59,7 @@ class User(object):
         for r in self.ratings:
             movie = movies.get(r.get('movieId'))
             if not movie: continue
-            ratings.append(f"{movie.get('title', "N/A")} ({movie.get('year', "N/A")}) [{r.get('rating', "N/A")}/5]")
+            ratings.append(f"{movie.get('title', 'N/A')} ({movie.get('year', 'N/A')}) [{r.get('rating', 'N/A')}/5]")
         return "the following movie ratings (<title> (<year>) [<rating>/5]), if any: \"" + ",".join(ratings) + "\""
     
     def __str__(self):

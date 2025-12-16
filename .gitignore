@@ -3,8 +3,8 @@ dist/
 __pycache__/
 # Ratings data
 backend/data/
-# Must be built
-backend/static/app_bundle.js
+# Must be built via the browserify build tool
+**/app_bundle.js
 *.pyc
 .venv/
 .env
